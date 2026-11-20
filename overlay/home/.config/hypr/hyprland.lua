@@ -40,6 +40,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
     hl.exec_cmd("swayosd-server --top-margin 0.85")
     hl.exec_cmd(home .. "/.local/bin/startup-sound.sh")
+    hl.exec_cmd("wl-paste --type text --watch cliphist store")
+    hl.exec_cmd("wl-paste --type image --watch cliphist store")
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("hyprctl setcursor 'Bibata-Modern-Amber' 24")
     hl.exec_cmd("XDG_MENU_PREFIX=arch- kbuildsycoca6 --noincremental")
@@ -164,7 +166,9 @@ hl.config({
 
         touchpad = {
             natural_scroll       = false,
-            disable_while_typing = false,
+            disable_while_typing = true,
+            tap_to_click         = true,
+            clickfinger_behavior = true,
         },
 
         touchdevice = {
@@ -256,6 +260,12 @@ hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(menu))
 
 hl.bind(mainMod .. " + H", hl.dsp.exec_cmd(home .. "/.local/bin/toggle-hotkeys-help.sh"))
 -- Super + H — справка по хоткеям / закрыть её
+
+hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(home .. "/.local/bin/wallpaper-picker.sh"))
+-- Super + W — выбор обоев
+
+hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(home .. "/.local/bin/cliphist-menu.sh"))
+-- Super + C — история буфера обмена
 
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 -- Super + E — файловый менеджер

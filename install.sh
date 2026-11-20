@@ -205,7 +205,7 @@ sed -i -e 's/^DEFAULT_INPUT_POLICY=.*/DEFAULT_INPUT_POLICY="DROP"/' \
        -e 's/^DEFAULT_OUTPUT_POLICY=.*/DEFAULT_OUTPUT_POLICY="ACCEPT"/' /etc/default/ufw || true
 sed -i 's/^ENABLED=no/ENABLED=yes/' /etc/ufw/ufw.conf || true
 for unit in NetworkManager bluetooth greetd systemd-timesyncd fstrim.timer \
-  cups power-profiles-daemon ufw fwupd-refresh.timer snapper-cleanup.timer; do
+  cups power-profiles-daemon ufw earlyoom fwupd-refresh.timer snapper-cleanup.timer; do
   systemctl enable "$unit" || true
 done
 systemctl disable snapper-timeline.timer || true
