@@ -1,0 +1,138 @@
+// -*- mode: jsonc -*-
+{
+    "position": "top",
+    "height": 32,
+    "spacing": 0,
+    "margin-top": 8,
+    "margin-left": 12,
+    "margin-right": 12,
+    "reload_style_on_change": true,
+
+    "modules-left": [
+        "custom/power",
+        "hyprland/workspaces",
+        "custom/launcher"
+    ],
+    "modules-center": [
+        "clock",
+        "pulseaudio",
+        "backlight"
+    ],
+    "modules-right": [
+        "network",
+        "bluetooth",
+        "battery",
+        "custom/spacer",
+        "custom/powerprofile",
+        "hyprland/language",
+        "tray"
+    ],
+
+    "custom/power": {
+        "format": "󰐥",
+        "tooltip": false,
+        "on-click": "$HOME/.local/bin/power-menu.sh"
+    },
+
+    "custom/spacer": {
+        "format": "{}",
+        "exec": "printf ' '",
+        "interval": "once",
+        "tooltip": false
+    },
+
+    "custom/launcher": {
+        "format": "󰀻",
+        "tooltip-format": "applications",
+        "on-click": "wofi --show drun"
+    },
+
+    "hyprland/workspaces": {
+        "all-outputs": false,
+        "format": "{id}",
+        "max-workspaces": 0
+    },
+
+
+    "clock": {
+        "format": " {:%H:%M}",
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "format-alt": " {:%d-%m-%Y}"
+    },
+
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰝟",
+        "format-icons": ["󰕿", "󰖀", "󰕾"],
+        "scroll-step": 5,
+        "on-click": "pavucontrol",
+        "on-click-right": "swayosd-client --output-volume mute-toggle"
+    },
+
+    "backlight": {
+        "format": "{icon} {percent}%",
+        "format-icons": ["󰃞", "󰃟", "󰃠"],
+        "tooltip": false,
+        "on-scroll-up": "swayosd-client --brightness raise",
+        "on-scroll-down": "swayosd-client --brightness lower"
+    },
+
+    "network": {
+        "format": "{ipaddr}",
+        "format-wifi": "{ipaddr}",
+        "format-ethernet": "{ipaddr}",
+        "format-linked": "{ipaddr}",
+        "format-disconnected": "󰤭",
+        "format-disabled": "󰤭",
+        "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+        "tooltip-format-wifi": "{icon} {essid} ({signalStrength}%)\n{ifname}: {ipaddr}",
+        "tooltip-format-ethernet": "{ifname}: {ipaddr}",
+        "on-click": "nm-connection-editor"
+    },
+
+    "bluetooth": {
+        "format": "{icon}",
+        "format-icons": {
+            "enabled": "󰂯",
+            "disabled": "󰂲"
+        },
+        "format-connected": "󰂱",
+        "format-disabled": "󰂲",
+        "format-off": "󰂲",
+        "tooltip-format-connected": "{device_alias}\n{device_address}",
+        "on-click": "blueman-manager"
+    },
+
+    "battery": {
+        "interval": 5,
+        "states": {
+            "warning": 25,
+            "critical": 15
+        },
+        "format": "{icon} {capacity}%",
+        "format-charging": "󰂄 {capacity}%",
+        "format-plugged": "󱐋 {capacity}%",
+        "format-icons": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+        "max-length": 25
+    },
+
+    "custom/powerprofile": {
+        "return-type": "json",
+        "exec": "$HOME/.local/bin/power-profile.sh",
+        "format": "{}",
+        "interval": 5,
+        "on-click": "$HOME/.local/bin/power-profile.sh cycle"
+    },
+
+    "hyprland/language": {
+        "format": "{}",
+        "format-en": "en",
+        "format-ru": "ru",
+        "format-dk": "dk"
+    },
+
+    "tray": {
+        "icon-size": 16,
+        "spacing": 6
+    }
+}

@@ -13,11 +13,11 @@ fi
 
 current="$(powerprofilesctl get 2>/dev/null || printf 'balanced')"
 case "$current" in
-    power-saver)  icon='󰌪'; class='saver' ;;
-    balanced)     icon='󰾅'; class='balanced' ;;
-    performance)  icon='󰓅'; class='performance' ;;
-    *)            icon='󰾅'; class='balanced' ;;
+    power-saver)  icon='󰌪'; label='saver'; class='saver' ;;
+    balanced)     icon='󰾅'; label='bal'; class='balanced' ;;
+    performance)  icon='󰓅'; label='perf'; class='performance' ;;
+    *)            icon='󰾅'; label='bal'; class='balanced' ;;
 esac
 
-printf '{"text":"%s","tooltip":"power profile: %s — click to cycle","class":"%s"}\n' \
-    "$icon" "$current" "$class"
+printf '{"text":"%s %s","tooltip":"power profile: %s — click to cycle","class":"%s"}\n' \
+    "$icon" "$label" "$current" "$class"
