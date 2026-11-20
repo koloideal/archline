@@ -5,7 +5,7 @@ btrfs-progs dosfstools ntfs-3g efibootmgr zram-generator sudo nano less man-db m
 networkmanager network-manager-applet wpa_supplicant bluez bluez-utils blueman
 # Звук, медиа-клавиши, OSD
 pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber libpulse gst-plugin-pipewire
-pavucontrol playerctl brightnessctl swayosd
+pavucontrol playerctl brightnessctl swayosd ffmpeg
 # Графика: Intel iGPU + NVIDIA dGPU (PRIME)
 mesa vulkan-intel intel-media-driver nvidia-open-dkms nvidia-utils nvidia-prime egl-wayland libva-nvidia-driver
 # Hyprland и окружение
