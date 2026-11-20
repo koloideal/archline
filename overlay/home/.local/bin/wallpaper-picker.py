@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import hashlib
+import json
 import os
 import subprocess
 import gi
@@ -18,6 +20,39 @@ ROOTS = (
 EXTS = ('.png', '.jpg', '.jpeg', '.webp')
 THUMB_W, THUMB_H = 190, 107
 APP_ID = 'dev.wp.pick'
+CACHE = os.path.expanduser('~/.cache/wallpaper-preview')
+
+
+def monitor_size():
+    try:
+        out = subprocess.run(('hyprctl', 'monitors', '-j'),
+                             capture_output=True, text=True, timeout=5).stdout
+        for m in json.loads(out):
+            if m.get('name') == MONITOR:
+                return int(m['width']), int(m['height'])
+    except Exception:
+        pass
+    return 1920, 1080
+
+
+MON_W, MON_H = monitor_size()
+
+
+def scaled_copy(path):
+    """Cover-scaled 1080p jpeg in cache — hyprpaper swaps it with no decode flash."""
+    os.makedirs(CACHE, exist_ok=True)
+    out = os.path.join(CACHE, hashlib.md5(path.encode()).hexdigest() + '.jpg')
+    if os.path.exists(out):
+        return out
+    pb = GdkPixbuf.Pixbuf.new_from_file(path)
+    sw, sh = pb.get_width(), pb.get_height()
+    scale = max(MON_W / sw, MON_H / sh)
+    w, h = max(MON_W, round(sw * scale)), max(MON_H, round(sh * scale))
+    pb = pb.scale_simple(w, h, GdkPixbuf.InterpType.BILINEAR)
+    pb = GdkPixbuf.Pixbuf.new_subpixbuf(
+        pb, (w - MON_W) // 2, (h - MON_H) // 2, MON_W, MON_H)
+    pb.savev(out, 'jpeg', ['quality'], ['92'])
+    return out
 
 CSS = b'''
 window { background: #1d2021; }
@@ -78,15 +113,22 @@ class Picker(Gtk.Application):
     @staticmethod
     def _set_wallpaper(path):
         subprocess.Popen(
-            ('sh', '-c',
-             'hyprctl hyprpaper preload "$1" ; hyprctl hyprpaper wallpaper "$2,$1"',
-             '_', path, MONITOR),
+            ('hyprctl', 'hyprpaper', 'wallpaper', f'{MONITOR},{path}'),
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def _apply_pending(self):
         path, self._pending = self._pending, None
-        if path and not self.confirmed:
-            self._set_wallpaper(path)
+        if not path or self.confirmed:
+            return GLib.SOURCE_REMOVE
+
+        def work():
+            try:
+                target = scaled_copy(path)
+            except Exception:
+                target = path
+            GLib.idle_add(lambda: not self.confirmed and self._set_wallpaper(target))
+
+        self.pool.submit(work)
         return GLib.SOURCE_REMOVE
 
     def do_activate(self):
@@ -183,8 +225,17 @@ class Picker(Gtk.Application):
     def _on_close(self, *_):
         self._pending = None
         if not self.confirmed and self.original:
-            self._set_wallpaper(self.original)
-        self.pool.shutdown(wait=False, cancel_futures=True)
+            original = self.original
+
+            def restore():
+                try:
+                    target = scaled_copy(original)
+                except Exception:
+                    target = original
+                GLib.idle_add(lambda: self._set_wallpaper(target))
+
+            self.pool.submit(restore)
+        self.pool.shutdown(wait=False)
         return False
 
     def _finish(self):

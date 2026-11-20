@@ -90,8 +90,10 @@ hl.config({
             active_border   = { colors = { "rgba(D65D0EEE)", "rgba(458588EE)" }, angle = 45 },
             inactive_border = "rgba(595959aa)",
         },
-        layout        = "dwindle",
-        allow_tearing = true,
+        layout              = "dwindle",
+        allow_tearing       = true,
+        resize_on_border    = true,
+        hover_icon_on_border = true,
     },
 
     decoration = {
