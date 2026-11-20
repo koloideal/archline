@@ -77,7 +77,7 @@ class Picker(Gtk.Application):
 
     def _apply_pending(self):
         path, self._pending = self._pending, None
-        if path:
+        if path and not self.confirmed:
             subprocess.Popen(
                 ('hyprctl', 'hyprpaper', 'wallpaper', f'{MONITOR},{path}'),
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -121,6 +121,7 @@ class Picker(Gtk.Application):
         win.add_controller(keys)
         win.connect('close-request', self._on_close)
 
+        win.set_child(vbox)
         win.present()
 
     @staticmethod
@@ -174,6 +175,7 @@ class Picker(Gtk.Application):
         return False
 
     def _on_close(self, *_):
+        self._pending = None
         if not self.confirmed and self.original:
             subprocess.Popen(
                 ('hyprctl', 'hyprpaper', 'wallpaper', f'{MONITOR},{self.original}'),
