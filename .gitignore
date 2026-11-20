@@ -1,2 +1,3 @@
 dotfiles/home.tar.gz
 *.log
+__pycache__/
