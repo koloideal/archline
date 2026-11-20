@@ -15,15 +15,18 @@ for _ in {1..75}; do
 done
 pactl info >/dev/null 2>&1 || { echo "pactl never came up"; exit 0; }
 
-# wait for a real default sink (not the early-boot auto_null dummy)
+# wait for a real default sink name (alsa_*/bluez_*/etc, not @DEFAULT_SINK@/auto_null/Dummy)
 sink=''
-for _ in {1..75}; do
-    sink="$(pactl get-default-sink 2>/dev/null || true)"
-    [[ -n "$sink" && "$sink" != *auto_null* && "$sink" != *Dummy* ]] && break
+for _ in {1..100}; do
+    name="$(pactl get-default-sink 2>/dev/null || true)"
+    case "$name" in
+        ''|@*|*auto_null*|*Dummy*|*dummy*) ;;
+        *) sink="$name"; break ;;
+    esac
     sleep 0.2
 done
 echo "sink=${sink:-none}"
-[[ -n "$sink" && "$sink" != *auto_null* && "$sink" != *Dummy* ]] || exit 0
+[[ -n "$sink" ]] || { pactl list short sinks; exit 0; }
 
 old_volume="$(pactl get-sink-volume "$sink" 2>/dev/null | grep -o '[0-9]\+%' | head -n 1 | tr -d '%')"
 old_mute="$(pactl get-sink-mute "$sink" 2>/dev/null | grep -q 'yes' && echo 1 || echo 0)"
