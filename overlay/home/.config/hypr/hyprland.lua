@@ -173,13 +173,9 @@ hl.config({
             clickfinger_behavior = true,
         },
 
-        touchdevice = {
-            output = "eDP-1",
-        },
+        touchdevice = {},
 
-        tablet = {
-            output = "eDP-1",
-        },
+        tablet = {},
     },
 })
 

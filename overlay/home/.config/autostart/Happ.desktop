@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Happ
 GenericName=Happ Frontend
-Exec=/home/barelkvaza/.local/bin/happ-autostart.sh
+Exec=/bin/sh -c 'exec "$HOME/.local/bin/happ-autostart.sh"'
 Terminal=false
 Icon=happ
 Categories=Network

@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
-# Полная установка Arch + Hyprland (сетап с ohmyarch) на Lenovo LOQ 15IAX9.
+# Полная установка Arch + Hyprland из этого бандла.
 # Запускать из live-ISO Arch от root:
 #
 #   udevadm trigger; udevadm settle
-#   mkdir -p /usb && (mount /dev/mapper/VentoyPart /usb || mount -L Ventoy /usb)
+#   mkdir -p /usb && mount -L <метка флешки> /usb
 #   bash /usb/Relocatable_Arch/install.sh
+#
+# Имя пользователя, hostname и часовой пояс спрашиваются при установке
+# (можно задать заранее через RA_USERNAME, RA_HOSTNAME, RA_TZ).
 #
 # ВНИМАНИЕ: выбранный диск стирается полностью (Windows в том числе).
 set -Eeuo pipefail
 
-USERNAME="barelkvaza"
-HOSTNAME="myarchbtw"
-TIMEZONE="Europe/Minsk"
-OLD_HOME="/home/kolo"
+USERNAME="${RA_USERNAME:-}"
+HOSTNAME="${RA_HOSTNAME:-}"
+TIMEZONE="${RA_TZ:-}"
 
 BUNDLE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG="/tmp/relocatable-arch.log"
@@ -60,6 +62,34 @@ setup_network() {
   echo "Подключено к $WIFI_SSID"
 }
 
+ask_identity() {
+  step "Пользователь и имя машины"
+  local in
+  if [[ -z "$USERNAME" ]]; then
+    while true; do
+      read -rp "Имя пользователя [arch]: " in
+      USERNAME="${in:-arch}"
+      [[ "$USERNAME" =~ ^[a-z_][a-z0-9_-]*$ ]] && break
+      echo "Только строчные буквы, цифры, - и _; первая — буква"
+    done
+  fi
+  if [[ -z "$HOSTNAME" ]]; then
+    read -rp "Имя компьютера [arch-pc]: " in
+    HOSTNAME="${in:-arch-pc}"
+  fi
+  if [[ -z "$TIMEZONE" ]]; then
+    TIMEZONE="$(curl -fs --max-time 5 https://ipapi.co/timezone 2>/dev/null || true)"
+    while true; do
+      read -rp "Часовой пояс [${TIMEZONE:-UTC}]: " in
+      TIMEZONE="${in:-${TIMEZONE:-UTC}}"
+      [[ -f "/usr/share/zoneinfo/$TIMEZONE" ]] && break
+      echo "Зоны $TIMEZONE нет, пример: Europe/Moscow"
+      TIMEZONE=""
+    done
+  fi
+  echo "→ $USERNAME@$HOSTNAME, зона $TIMEZONE"
+}
+
 pick_disk() {
   step "Выбор диска"
   local -a disks
@@ -99,8 +129,8 @@ prepare_live() {
   step "Подготовка live-окружения"
   timedatectl set-ntp true || true
   sed -i 's/^#\?ParallelDownloads.*/ParallelDownloads = 10/' /etc/pacman.conf
-  if ! reflector --country Belarus,Poland,Lithuania,Germany --protocol https --age 24 \
-       --sort rate --latest 10 --save /etc/pacman.d/mirrorlist; then
+  if ! reflector --protocol https --age 24 \
+       --sort rate --latest 15 --save /etc/pacman.d/mirrorlist; then
     echo "reflector не сработал, беру mirrorlist из бандла"
     cp "$BUNDLE/packages/mirrorlist" /etc/pacman.d/mirrorlist
   fi
@@ -266,7 +296,9 @@ deploy_dotfiles() {
   step "Конфиги, обои, тема"
   local home="$MNT/home/$USERNAME"
   tar -C "$home" -xzpf "$BUNDLE/dotfiles/home.tar.gz" --no-same-owner --no-overwrite-dir
-  grep -rlIZ --exclude-dir=Pictures "$OLD_HOME" "$home" | xargs -0 -r sed -i "s|$OLD_HOME|/home/$USERNAME|g"
+  # Переписываем захардкоженные /home/<старое имя> на /home/<новый пользователь>
+  grep -rlIZ --exclude-dir=Pictures -E '/home/[A-Za-z0-9_.-]+' "$home" \
+    | xargs -0 -r sed -i -E "s|/home/[A-Za-z0-9_.-]+|/home/$USERNAME|g"
 
   as_user git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "/home/$USERNAME/.oh-my-zsh" \
     || echo "oh-my-zsh не склонировался: git clone https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh"
@@ -316,6 +348,7 @@ finish() {
 
 preflight
 setup_network
+ask_identity
 pick_disk
 ask_password
 prepare_live

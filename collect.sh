@@ -43,12 +43,17 @@ PATHS=(
   .gitconfig
 )
 
-# Заменены Lua-конфигом (overlay/home/.config/hypr/hyprland.lua)
+# Заменены Lua-конфигом (overlay/home/.config/hypr/hyprland.lua) или не нужны в бандле:
+# привязаны к конкретной машине (state-файлы, закладки, старый wallpaper-бэкенд).
 LEGACY=(
   .config/hypr/hyprland.conf
   .config/hypr/monitors.conf
   .config/hypr/workspaces.conf
   .config/hypr/scripts/workspace-setup.sh
+  .config/hypr/hyprpaper.conf
+  .config/hypr/wallpaper
+  .config/gtk-3.0/bookmarks
+  .config/qimgv/savedState.conf
 )
 
 

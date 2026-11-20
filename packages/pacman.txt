@@ -11,7 +11,7 @@ mesa vulkan-intel intel-media-driver nvidia-open-dkms nvidia-utils nvidia-prime 
 # Hyprland и окружение
 hyprland hypridle hyprlock awww uwsm greetd xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
 xdg-user-dirs qt5-wayland qt6-wayland waybar wofi swaync kitty grim slurp wl-clipboard
-gammastep udiskie polkit-gnome wev power-profiles-daemon python-gobject
+gammastep geoclue2 udiskie polkit-gnome wev power-profiles-daemon python-gobject
 # Файлы, архивы, съёмные носители
 thunar thunar-archive-plugin thunar-volman tumbler ffmpegthumbnailer gvfs gvfs-mtp gvfs-smb gvfs-afc xarchiver
 file-roller unzip zip p7zip unrar
