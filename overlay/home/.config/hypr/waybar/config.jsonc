@@ -10,13 +10,13 @@
 
     "modules-left": [
         "custom/power",
-        "hyprland/workspaces",
+        "clock",
+        "pulseaudio",
+        "backlight",
         "custom/launcher"
     ],
     "modules-center": [
-        "clock",
-        "pulseaudio",
-        "backlight"
+        "hyprland/workspaces"
     ],
     "modules-right": [
         "network",
@@ -73,8 +73,8 @@
         "format": "{icon} {percent}%",
         "format-icons": ["󰃞", "󰃟", "󰃠"],
         "tooltip": false,
-        "on-scroll-up": "swayosd-client --brightness raise",
-        "on-scroll-down": "swayosd-client --brightness lower"
+        "on-scroll-up": "swayosd-client --brightness +2",
+        "on-scroll-down": "swayosd-client --brightness -2"
     },
 
     "network": {

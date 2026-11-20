@@ -38,11 +38,12 @@ window#waybar {
     border-radius: 20px 0 0 20px;
     color: @--color-accent;
     font-size: 18px;
-    min-width: 40px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 #workspaces {
-    min-width: 140px;
+    border-radius: 20px;
 }
 
 #workspaces button {
@@ -59,58 +60,32 @@ window#waybar {
 #custom-launcher {
     border-radius: 0 20px 20px 0;
     font-size: 16px;
-    min-width: 48px;
-}
-
-#clock {
-    border-radius: 20px 0 0 20px;
-    min-width: 100px;
-}
-
-#pulseaudio {
-    min-width: 72px;
-}
-
-#backlight {
-    border-radius: 0 20px 20px 0;
-    min-width: 66px;
 }
 
 #network {
     border-radius: 20px 0 0 20px;
-    min-width: 120px;
-}
-
-#bluetooth {
-    min-width: 48px;
 }
 
 #battery {
     border-radius: 0 20px 20px 0;
-    min-width: 74px;
 }
 
 #custom-spacer {
     background: transparent;
-    min-width: 14px;
+    margin-left: 14px;
 }
 
 #custom-powerprofile {
     border-radius: 20px 0 0 20px;
-    min-width: 82px;
-}
-
-#language {
-    min-width: 46px;
 }
 
 #tray {
     border-radius: 0 20px 20px 0;
-    min-width: 108px;
     padding-right: 8px;
 }
 
 #custom-launcher,
+#clock,
 #pulseaudio,
 #backlight,
 #network,
