@@ -4,7 +4,7 @@
 #
 #   udevadm trigger; udevadm settle
 #   mkdir -p /usb && mount -L <метка флешки> /usb
-#   bash /usb/Relocatable_Arch/install.sh
+#   bash /usb/myArch/install.sh
 #
 # Имя пользователя, hostname и часовой пояс спрашиваются при установке
 # (можно задать заранее через RA_USERNAME, RA_HOSTNAME, RA_TZ).

@@ -1,4 +1,4 @@
-# Relocatable_Arch
+# myArch
 
 Переносимая сборка Arch Linux + Hyprland: репозиторий разворачивается
 в полноценную систему на любой машине через `install.sh` с live-ISO.
