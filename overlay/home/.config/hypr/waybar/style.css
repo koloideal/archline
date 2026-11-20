@@ -29,7 +29,8 @@ window#waybar {
 #battery,
 #custom-powerprofile,
 #language,
-#tray {
+#tray,
+#custom-happ {
     background: @--color-bg;
 }
 
@@ -78,9 +79,14 @@ window#waybar {
 }
 
 #tray {
-    border-radius: 0 20px 20px 0;
     padding-left: 10px;
-    padding-right: 12px;
+    padding-right: 10px;
+}
+
+#custom-happ {
+    border-radius: 0 20px 20px 0;
+    padding-left: 6px;
+    padding-right: 10px;
 }
 
 #clock,
@@ -118,7 +124,7 @@ window#waybar {
 }
 
 #custom-powerprofile.saver {
-    color: #458588;
+    color: #448aff;
 }
 
 #tray menu {

@@ -24,7 +24,8 @@
         "custom/spacer",
         "custom/powerprofile",
         "hyprland/language",
-        "tray"
+        "tray",
+        "custom/happ"
     ],
 
     "custom/power": {
@@ -126,6 +127,13 @@
 
     "tray": {
         "icon-size": 16,
-        "spacing": 6
+        "spacing": 6,
+        "ignore-list": ["Happ"]
+    },
+
+    "custom/happ": {
+        "format": "󰖂",
+        "tooltip": "Happ",
+        "on-click": "/opt/happ/bin/Happ"
     }
 }
