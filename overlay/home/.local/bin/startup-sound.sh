@@ -25,5 +25,15 @@ done
 echo "sink=${sink:-none}"
 [[ -n "$sink" && "$sink" != *auto_null* && "$sink" != *Dummy* ]] || exit 0
 
-timeout 5s pw-play --volume=0.85 --target="$sink" "$sound"
+old_volume="$(pactl get-sink-volume "$sink" 2>/dev/null | grep -o '[0-9]\+%' | head -n 1 | tr -d '%')"
+old_mute="$(pactl get-sink-mute "$sink" 2>/dev/null | grep -q 'yes' && echo 1 || echo 0)"
+echo "old_volume=$old_volume old_mute=$old_mute"
+
+pactl set-sink-mute "$sink" 0 >/dev/null 2>&1 || true
+pactl set-sink-volume "$sink" 100% >/dev/null 2>&1 || true
+
+timeout 5s pw-play --volume=1.0 --target="$sink" "$sound"
 echo "pw-play exit=$?"
+
+[[ -n "$old_volume" ]] && pactl set-sink-volume "$sink" "$old_volume%" >/dev/null 2>&1 || true
+pactl set-sink-mute "$sink" "${old_mute:-0}" >/dev/null 2>&1 || true
