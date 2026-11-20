@@ -114,7 +114,7 @@
         "return-type": "json",
         "exec": "$HOME/.local/bin/power-profile.sh",
         "format": "{}",
-        "interval": 5,
+        "interval": 1,
         "on-click": "$HOME/.local/bin/power-profile.sh cycle"
     },
 

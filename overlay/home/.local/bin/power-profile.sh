@@ -13,7 +13,7 @@ fi
 
 current="$(powerprofilesctl get 2>/dev/null || printf 'balanced')"
 case "$current" in
-    power-saver)  icon='󰌪'; label='saver'; class='saver' ;;
+    power-saver)  icon='󰌪'; label='quiet'; class='saver' ;;
     balanced)     icon='󰾅'; label='bal'; class='balanced' ;;
     performance)  icon='󰓅'; label='perf'; class='performance' ;;
     *)            icon='󰾅'; label='bal'; class='balanced' ;;
