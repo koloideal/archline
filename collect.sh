@@ -41,7 +41,6 @@ PATHS=(
   .zshalias
   .gtkrc-2.0
   .gitconfig
-  Pictures/wallpapers
 )
 
 # Заменены Lua-конфигом (overlay/home/.config/hypr/hyprland.lua)
