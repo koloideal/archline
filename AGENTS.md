@@ -3,7 +3,7 @@
 Переносит сетап Arch + Hyprland с текущего ноута (ohmyarch, kolo) на Lenovo LOQ 15IAX9 (barelkvaza@myarchbtw).
 
 - `collect.sh` — собирает конфиги из $HOME в `dotfiles/home.tar.gz`, поверх кладёт `overlay/home`. Систему не меняет.
-- `overlay/home` — файлы, написанные руками: `hyprland.lua` (Lua-конфиг, Hyprland >= 0.55), `hypridle.conf`, Waybar `config.jsonc`/`style.css`, `power-menu.sh`, `power-profile.sh`, `happ-autostart.sh` + `autostart/Happ.desktop`, `startup-sound.sh` + `sounds/startup.m4a`, `chrome-focus.sh`, конфиг gammastep. Автологин без greeter'а; пароль только на `Super+L`/`hyprlock`.
+- `overlay/home` — файлы, написанные руками: `hyprland.lua` (Lua-конфиг, Hyprland >= 0.55), `hypridle.conf`, Waybar `config.jsonc`/`style.css`, `power-menu.sh`, `power-profile.sh`, `happ-autostart.sh` + `autostart/Happ.desktop`, `startup-sound.sh` + `sounds/startup.m4a`, `toggle-hotkeys-help.sh` + `hotkeys.txt`, `chrome-focus.sh`, конфиг gammastep. Автологин без greeter'а; пароль только на `Super+L`/`hyprlock`.
 - `install.sh` — запускается из live-ISO от root, стирает выбранный диск и ставит всё.
 - Пакеты: `packages/pacman.txt`, `packages/aur.txt`.
 

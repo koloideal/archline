@@ -1,0 +1,36 @@
+Hyprland — главные горячие клавиши
+
+Запуск и система
+  Super + Enter          терминал
+  Super + D              меню приложений
+  Super + E              файловый менеджер
+  Super + H              эта справка / закрыть её
+  Super + L              заблокировать экран
+  Super + X              меню питания
+  Super + Q              закрыть окно
+  Super + Shift + Q      выйти из сессии
+
+Окна
+  Super + стрелки        переключить фокус
+  Super + Shift + стрелки переместить окно
+  Super + V              floating / tiling
+  Super + Shift + F      fullscreen
+  Super + R              resize mode, Esc/Enter — выход
+
+Workspaces
+  Super + 1..0           перейти на workspace
+  Super + Shift + 1..0   отправить окно на workspace
+
+Раскладка
+  Caps Lock / Super+Space  переключить us/ru
+
+Скриншоты и медиа
+  Print                  скриншот экрана
+  Shift + Print          скриншот области
+  Volume/Brightness      громкость/яркость с OSD
+  Media keys             play/pause/next/prev/stop
+
+Выход из справки: q или повторный Super + H.
+
+
+[3mлюбимой барельке ❤[0m

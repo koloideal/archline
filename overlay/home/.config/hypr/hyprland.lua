@@ -182,6 +182,14 @@ hl.config({
 --------------------------------
 
 hl.window_rule({
+    name  = "hotkeys-help-float",
+    match = { class = "^(hotkeys-help)$" },
+    float = true,
+    center = true,
+    size = { "monitor_w*0.60", "monitor_w*0.60*9/16" },
+})
+
+hl.window_rule({
     name  = "suppress-maximize-events",
     match = { class = ".*" },
     suppress_event = "maximize",
@@ -245,6 +253,9 @@ hl.bind(mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("uwsm stop"))
 
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(menu))
 -- Super + D — меню приложений
+
+hl.bind(mainMod .. " + H", hl.dsp.exec_cmd(home .. "/.local/bin/toggle-hotkeys-help.sh"))
+-- Super + H — справка по хоткеям / закрыть её
 
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 -- Super + E — файловый менеджер
