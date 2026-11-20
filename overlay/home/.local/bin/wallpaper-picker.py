@@ -16,7 +16,7 @@ ROOTS = (
     os.path.expanduser('~/.config/hypr/wallpapers'),
 )
 EXTS = ('.png', '.jpg', '.jpeg', '.webp')
-THUMB_W, THUMB_H = 300, 170
+THUMB_W, THUMB_H = 190, 107
 APP_ID = 'dev.wp.pick'
 
 CSS = b'''
@@ -75,12 +75,18 @@ class Picker(Gtk.Application):
         self._pending = path
         GLib.timeout_add(80, self._apply_pending)
 
+    @staticmethod
+    def _set_wallpaper(path):
+        subprocess.Popen(
+            ('sh', '-c',
+             'hyprctl hyprpaper preload "$1" ; hyprctl hyprpaper wallpaper "$2,$1"',
+             '_', path, MONITOR),
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
     def _apply_pending(self):
         path, self._pending = self._pending, None
         if path and not self.confirmed:
-            subprocess.Popen(
-                ('hyprctl', 'hyprpaper', 'wallpaper', f'{MONITOR},{path}'),
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self._set_wallpaper(path)
         return GLib.SOURCE_REMOVE
 
     def do_activate(self):
@@ -91,7 +97,7 @@ class Picker(Gtk.Application):
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
         win = Gtk.ApplicationWindow(application=self, title='Обои')
-        win.set_default_size(1100, 700)
+        win.set_default_size(830, 520)
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         hint = Gtk.Label(label='стрелки / клик — превью   ·   Enter / двойной клик — выбрать   ·   Esc — отмена')
@@ -126,7 +132,7 @@ class Picker(Gtk.Application):
 
     @staticmethod
     def _setup(_factory, item):
-        pic = Gtk.Picture(content_fit=Gtk.ContentFit.COVER)
+        pic = Gtk.Picture(content_fit=Gtk.ContentFit.CONTAIN)
         pic.set_size_request(THUMB_W, THUMB_H)
         item.set_child(pic)
 
@@ -137,7 +143,7 @@ class Picker(Gtk.Application):
 
         def load():
             try:
-                pb = GdkPixbuf.Pixbuf.new_from_file_at_scale(path, THUMB_W, THUMB_H * 2, False)
+                pb = GdkPixbuf.Pixbuf.new_from_file_at_scale(path, THUMB_W, THUMB_H, True)
                 tex = Gdk.Texture.new_for_pixbuf(pb)
                 GLib.idle_add(lambda: pic._wp_path == path and pic.set_paintable(tex))
             except Exception:
@@ -177,9 +183,7 @@ class Picker(Gtk.Application):
     def _on_close(self, *_):
         self._pending = None
         if not self.confirmed and self.original:
-            subprocess.Popen(
-                ('hyprctl', 'hyprpaper', 'wallpaper', f'{MONITOR},{self.original}'),
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self._set_wallpaper(self.original)
         self.pool.shutdown(wait=False, cancel_futures=True)
         return False
 

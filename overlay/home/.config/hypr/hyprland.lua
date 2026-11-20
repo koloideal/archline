@@ -188,7 +188,7 @@ hl.window_rule({
     match = { class = "^(dev.wp.pick)$" },
     float = true,
     center = true,
-    size = { "monitor_w*0.60", "monitor_h*0.70" },
+    size = { "monitor_w*0.45", "monitor_h*0.52" },
 })
 
 hl.window_rule({
