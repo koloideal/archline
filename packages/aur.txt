@@ -1,0 +1,11 @@
+bibata-cursor-theme-bin
+gruvbox-material-gtk-theme-git
+kvantum-theme-gruvbox-git
+gruvbox-plus-icon-theme
+google-chrome
+qimgv
+onlyoffice-bin
+ttf-ms-fonts
+ttf-aptos
+autojump
+wlogout

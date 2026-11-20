@@ -1,0 +1,29 @@
+# База
+base base-devel linux-zen linux-zen-headers linux-firmware intel-ucode sof-firmware
+btrfs-progs dosfstools ntfs-3g efibootmgr zram-generator sudo nano less man-db man-pages man-pages-ru tldr rsync
+# Сеть, bluetooth
+networkmanager network-manager-applet wpa_supplicant bluez bluez-utils blueman
+# Звук, медиа-клавиши, OSD
+pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber libpulse gst-plugin-pipewire
+pavucontrol playerctl brightnessctl swayosd
+# Графика: Intel iGPU + NVIDIA dGPU (PRIME)
+mesa vulkan-intel intel-media-driver nvidia-open-dkms nvidia-utils nvidia-prime egl-wayland libva-nvidia-driver
+# Hyprland и окружение
+hyprland hypridle hyprlock hyprpaper uwsm greetd xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
+xdg-user-dirs qt5-wayland qt6-wayland waybar wofi swaync kitty grim slurp wl-clipboard
+gammastep udiskie polkit-gnome wev power-profiles-daemon
+# Файлы, архивы, съёмные носители
+thunar thunar-archive-plugin thunar-volman tumbler ffmpegthumbnailer gvfs gvfs-mtp gvfs-smb gvfs-afc xarchiver
+file-roller unzip zip p7zip unrar
+# Печать, файрвол, прошивки, снапшоты
+cups system-config-printer ufw gufw fwupd snapper snap-pac btrfs-assistant
+# Темы, шрифты
+nwg-look qt6ct kvantum kvantum-theme-materia papirus-icon-theme archlinux-xdg-menu kservice
+noto-fonts noto-fonts-emoji noto-fonts-cjk ttf-jetbrains-mono ttf-jetbrains-mono-nerd ttf-cascadia-code
+ttf-cascadia-code-nerd ttf-nerd-fonts-symbols ttf-firacode-nerd
+# Шелл и терминальные утилиты
+zsh zsh-autosuggestions zsh-syntax-highlighting starship eza bat fastfetch hyfetch macchina btop tree
+# Dev
+git git-lfs github-cli neovim
+# Повседневные приложения
+telegram-desktop zed vlc vlc-plugin-ffmpeg libreoffice-fresh pinta imv firefox okular
