@@ -12,8 +12,7 @@
         "custom/power",
         "clock",
         "pulseaudio",
-        "backlight",
-        "custom/launcher"
+        "backlight"
     ],
     "modules-center": [
         "hyprland/workspaces"
@@ -41,11 +40,6 @@
         "tooltip": false
     },
 
-    "custom/launcher": {
-        "format": "󰀻",
-        "tooltip-format": "applications",
-        "on-click": "wofi --show drun"
-    },
 
     "hyprland/workspaces": {
         "all-outputs": false,

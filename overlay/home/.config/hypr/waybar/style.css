@@ -21,7 +21,6 @@ window#waybar {
 
 #custom-power,
 #workspaces,
-#custom-launcher,
 #clock,
 #pulseaudio,
 #backlight,
@@ -38,8 +37,8 @@ window#waybar {
     border-radius: 20px 0 0 20px;
     color: @--color-accent;
     font-size: 18px;
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
 }
 
 #workspaces {
@@ -49,17 +48,16 @@ window#waybar {
 #workspaces button {
     border-radius: 0;
     border-bottom: solid 2px transparent;
-    padding-left: 6px;
-    padding-right: 6px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 #workspaces button.active {
     border-bottom: solid 2px @--color-fg;
 }
 
-#custom-launcher {
+#backlight {
     border-radius: 0 20px 20px 0;
-    font-size: 16px;
 }
 
 #network {
@@ -81,10 +79,10 @@ window#waybar {
 
 #tray {
     border-radius: 0 20px 20px 0;
-    padding-right: 8px;
+    padding-left: 10px;
+    padding-right: 12px;
 }
 
-#custom-launcher,
 #clock,
 #pulseaudio,
 #backlight,
@@ -93,8 +91,8 @@ window#waybar {
 #battery,
 #custom-powerprofile,
 #language {
-    padding-left: 6px;
-    padding-right: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 #network.disconnected,
