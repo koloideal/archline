@@ -9,7 +9,7 @@ pavucontrol playerctl brightnessctl swayosd ffmpeg
 # Графика: Intel iGPU + NVIDIA dGPU (PRIME)
 mesa vulkan-intel intel-media-driver nvidia-open-dkms nvidia-utils nvidia-prime egl-wayland libva-nvidia-driver
 # Hyprland и окружение
-hyprland hypridle hyprlock hyprpaper uwsm greetd xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
+hyprland hypridle hyprlock awww uwsm greetd xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
 xdg-user-dirs qt5-wayland qt6-wayland waybar wofi swaync kitty grim slurp wl-clipboard
 gammastep udiskie polkit-gnome wev power-profiles-daemon python-gobject
 # Файлы, архивы, съёмные носители

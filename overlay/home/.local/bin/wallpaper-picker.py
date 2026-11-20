@@ -1,255 +1,266 @@
 #!/usr/bin/env python3
+"""Wallpaper picker: GTK4 grid of cached thumbnails, live preview through awww.
+
+  wallpaper-picker.py            open the picker
+  wallpaper-picker.py --warm     build missing thumbnails (all CPU cores)
+  wallpaper-picker.py --restore  show the saved wallpaper (session start)
+"""
 import hashlib
-import json
 import os
 import subprocess
-import gi
+import sys
+import time
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Gdk', '4.0')
-gi.require_version('GdkPixbuf', '2.0')
-from concurrent.futures import ThreadPoolExecutor
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk
-
-MONITOR = 'eDP-1'
-CONF = os.path.expanduser('~/.config/hypr/hyprpaper.conf')
-ROOTS = (
-    os.path.expanduser('~/Pictures/wallpapers'),
-    os.path.expanduser('~/.config/hypr/wallpapers'),
-)
+HOME = os.path.expanduser('~')
+ROOTS = (f'{HOME}/Pictures/wallpapers', f'{HOME}/.config/hypr/wallpapers')
+STATE = f'{HOME}/.config/hypr/wallpaper'
+DEFAULT = f'{HOME}/.config/hypr/wallpapers/girl-2.png'
+THUMBS = f'{HOME}/.cache/wallpaper-thumbs'
 EXTS = ('.png', '.jpg', '.jpeg', '.webp')
-THUMB_W, THUMB_H = 190, 107
+THUMB_W, THUMB_H = 180, 102
 APP_ID = 'dev.wp.pick'
-CACHE = os.path.expanduser('~/.cache/wallpaper-preview')
+FADE = ('--transition-type', 'fade', '--transition-duration', '0.35', '--transition-fps', '144')
 
 
-def monitor_size():
-    try:
-        out = subprocess.run(('hyprctl', 'monitors', '-j'),
-                             capture_output=True, text=True, timeout=5).stdout
-        for m in json.loads(out):
-            if m.get('name') == MONITOR:
-                return int(m['width']), int(m['height'])
-    except Exception:
-        pass
-    return 1920, 1080
-
-
-MON_W, MON_H = monitor_size()
-
-
-def scaled_copy(path):
-    """Cover-scaled 1080p jpeg in cache — hyprpaper swaps it with no decode flash."""
-    os.makedirs(CACHE, exist_ok=True)
-    out = os.path.join(CACHE, hashlib.md5(path.encode()).hexdigest() + '.jpg')
-    if os.path.exists(out):
-        return out
-    pb = GdkPixbuf.Pixbuf.new_from_file(path)
-    sw, sh = pb.get_width(), pb.get_height()
-    scale = max(MON_W / sw, MON_H / sh)
-    w, h = max(MON_W, round(sw * scale)), max(MON_H, round(sh * scale))
-    pb = pb.scale_simple(w, h, GdkPixbuf.InterpType.BILINEAR)
-    pb = GdkPixbuf.Pixbuf.new_subpixbuf(
-        pb, (w - MON_W) // 2, (h - MON_H) // 2, MON_W, MON_H)
-    pb.savev(out, 'jpeg', ['quality'], ['92'])
-    return out
-
-CSS = b'''
-window { background: #1d2021; }
-picture { border-radius: 8px; }
-picture:selected { outline: 3px solid #fe8019; }
-listitem { padding: 4px; }
-gridview { padding: 8px; }
-'''
-
-
-def collect_wallpapers():
+def collect():
     items = []
     for root in ROOTS:
-        if not os.path.isdir(root):
-            continue
-        for dirpath, _, names in os.walk(root):
-            for name in names:
-                if name.lower().endswith(EXTS):
-                    items.append((os.path.relpath(os.path.join(dirpath, name), root),
-                                  os.path.join(dirpath, name)))
-    items.sort(key=lambda i: i[0].lower())
+        for d, _, names in os.walk(root):
+            for n in names:
+                if n.lower().endswith(EXTS):
+                    p = os.path.join(d, n)
+                    items.append((os.path.relpath(p, root).lower(), p))
+    items.sort()
     return [p for _, p in items]
 
 
-def read_current(conf=CONF):
+def thumb_path(path):
+    st = os.stat(path)
+    key = f'{path}:{st.st_mtime_ns}:{st.st_size}:{THUMB_W}x{THUMB_H}'.encode()
+    return os.path.join(THUMBS, hashlib.md5(key).hexdigest() + '.png')
+
+
+def make_thumb(path):
     try:
-        with open(conf, encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith('path'):
-                    return line.split('=', 1)[1].strip()
+        out = thumb_path(path)
+        if os.path.exists(out):
+            return
+        import gi
+        gi.require_version('GdkPixbuf', '2.0')
+        from gi.repository import GdkPixbuf
+        pb = GdkPixbuf.Pixbuf.new_from_file_at_scale(path, THUMB_W, THUMB_H, True)
+        tmp = f'{out}.{os.getpid()}.tmp'
+        pb.savev(tmp, 'png', [], [])
+        os.replace(tmp, out)
+    except Exception:
+        pass
+
+
+def warm():
+    from concurrent.futures import ProcessPoolExecutor
+    os.makedirs(THUMBS, exist_ok=True)
+    try:
+        os.nice(10)
     except OSError:
         pass
-    return None
+    missing = [p for p in collect() if not os.path.exists(thumb_path(p))]
+    if missing:
+        with ProcessPoolExecutor() as ex:
+            list(ex.map(make_thumb, missing, chunksize=4))
 
 
-def write_conf(path, conf=CONF):
+def saved():
     try:
-        with open(conf, 'w', encoding='utf-8') as f:
-            f.write(f'ipc = on\nwallpaper {{\n\tmonitor = \n\tpath = {path}\n\tfit_mode = cover\n}}\nsplash = false\n')
+        with open(STATE, encoding='utf-8') as f:
+            p = f.read().strip()
+        if os.path.isfile(p):
+            return p
     except OSError:
         pass
+    return DEFAULT
 
 
-class Picker(Gtk.Application):
-    def __init__(self, files, original):
-        super().__init__(application_id=APP_ID)
-        self.files = files
-        self.original = original
-        self.confirmed = False
-        self.pool = ThreadPoolExecutor(max_workers=6)
-        self._pending = 0
+def show(path, fade=True, wait=False):
+    cmd = ('awww', 'img', *(FADE if fade else ('--transition-type', 'none')), path)
+    run = subprocess.run if wait else subprocess.Popen
+    return run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    def preview(self, path):
-        self._pending = path
-        GLib.timeout_add(80, self._apply_pending)
 
-    @staticmethod
-    def _set_wallpaper(path):
-        subprocess.Popen(
-            ('hyprctl', 'hyprpaper', 'wallpaper', f'{MONITOR},{path}'),
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+def restore():
+    for _ in range(50):
+        if subprocess.run(('awww', 'query'), capture_output=True).returncode == 0:
+            break
+        time.sleep(0.1)
+    show(saved(), fade=False, wait=True)
 
-    def _apply_pending(self):
-        path, self._pending = self._pending, None
-        if not path or self.confirmed:
-            return GLib.SOURCE_REMOVE
 
-        def work():
+def picker():
+    import gi
+    gi.require_version('Gtk', '4.0')
+    gi.require_version('Gdk', '4.0')
+    from gi.repository import Gdk, Gio, GLib, Gtk
+    GLib.set_prgname(APP_ID)
+
+    css = b'''
+    window { background: #1d2021; }
+    gridview { padding: 6px; background: transparent; }
+    gridview > child { padding: 3px; border-radius: 6px; }
+    gridview > child:selected { background: #fe8019; }
+    '''
+
+    class Picker(Gtk.Application):
+        def __init__(self):
+            super().__init__(flags=Gio.ApplicationFlags.NON_UNIQUE)
+            self.files = collect()
+            self.original = saved()
+            self.done = False
+            self.proc = None
+            self.timer = 0
+            self.waiting = {}
+            self.textures = {}
+            from concurrent.futures import ThreadPoolExecutor
+            self.loader = ThreadPoolExecutor(max_workers=4)
+
+        def do_activate(self):
+            prov = Gtk.CssProvider()
+            prov.load_from_data(css)
+            Gtk.StyleContext.add_provider_for_display(
+                Gdk.Display.get_default(), prov, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+            os.makedirs(THUMBS, exist_ok=True)
+            if any(not os.path.exists(thumb_path(p)) for p in self.files):
+                subprocess.Popen((sys.executable, os.path.abspath(__file__), '--warm'),
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                GLib.timeout_add(400, self.poll)
+
+            self.sel = Gtk.SingleSelection(model=Gtk.StringList.new(self.files))
+            if self.original in self.files:
+                self.sel.set_selected(self.files.index(self.original))
+            self.sel.connect('notify::selected', self.on_selected)
+
+            fac = Gtk.SignalListItemFactory()
+            fac.connect('setup', self.setup)
+            fac.connect('bind', self.bind)
+            fac.connect('unbind', self.unbind)
+
+            self.grid = Gtk.GridView(model=self.sel, factory=fac, max_columns=8)
+            self.grid.connect('activate', lambda *_: self.finish(True))
+
+            scroll = Gtk.ScrolledWindow(vexpand=True, child=self.grid)
+            self.win = Gtk.ApplicationWindow(application=self, title='Обои', child=scroll)
+            self.win.set_default_size(820, 500)
+            self.win.connect('close-request', lambda *_: self.finish(False) or True)
+
+            keys = Gtk.EventControllerKey()
+            keys.connect('key-pressed', self.on_key)
+            self.win.add_controller(keys)
+            self.win.present()
+            GLib.idle_add(self.scroll_to_selected)
+
+        def scroll_to_selected(self):
+            pos = self.sel.get_selected()
+            if pos != Gtk.INVALID_LIST_POSITION:
+                self.grid.scroll_to(pos, Gtk.ListScrollFlags.FOCUS, None)
+            return False
+
+        @staticmethod
+        def setup(_f, item):
+            pic = Gtk.Picture(content_fit=Gtk.ContentFit.CONTAIN, can_shrink=True)
+            pic.set_size_request(THUMB_W, THUMB_H)
+            item.set_child(pic)
+
+        def bind(self, _f, item):
+            pic, path = item.get_child(), item.get_item().get_string()
+            tp = thumb_path(path)
+            pic.want = tp
+            tex = self.textures.get(tp)
+            pic.set_paintable(tex)
+            if tex is None:
+                if os.path.exists(tp):
+                    self.loader.submit(self.load, pic, tp)
+                else:
+                    self.waiting[pic] = tp
+
+        def unbind(self, _f, item):
+            pic = item.get_child()
+            pic.want = None
+            self.waiting.pop(pic, None)
+
+        def load(self, pic, tp):
+            if pic.want != tp or self.done:
+                return
             try:
-                target = scaled_copy(path)
-            except Exception:
-                target = path
-            GLib.idle_add(lambda: not self.confirmed and self._set_wallpaper(target))
+                tex = Gdk.Texture.new_from_filename(tp)
+            except GLib.Error:
+                return
+            GLib.idle_add(self.loaded, pic, tp, tex)
 
-        self.pool.submit(work)
-        return GLib.SOURCE_REMOVE
+        def loaded(self, pic, tp, tex):
+            self.textures[tp] = tex
+            if pic.want == tp:
+                pic.set_paintable(tex)
+            return False
 
-    def do_activate(self):
-        provider = Gtk.CssProvider()
-        provider.load_from_data(CSS)
-        Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(), provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        def poll(self):
+            for pic, tp in list(self.waiting.items()):
+                if os.path.exists(tp):
+                    del self.waiting[pic]
+                    self.loader.submit(self.load, pic, tp)
+            return not self.done
 
-        win = Gtk.ApplicationWindow(application=self, title='Обои')
-        win.set_default_size(830, 520)
+        def current(self):
+            it = self.sel.get_selected_item()
+            return it.get_string() if it else None
 
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        hint = Gtk.Label(label='стрелки / клик — превью   ·   Enter / двойной клик — выбрать   ·   Esc — отмена')
-        hint.add_css_class('dim-label')
-        hint.set_margin_top(6)
-        hint.set_margin_bottom(2)
-        vbox.append(hint)
+        def on_selected(self, *_):
+            if self.timer:
+                GLib.source_remove(self.timer)
+            self.timer = GLib.timeout_add(120, self.preview)
 
-        scroll = Gtk.ScrolledWindow(vexpand=True)
-        vbox.append(scroll)
+        def preview(self):
+            self.timer = 0
+            path = self.current()
+            if path and not self.done:
+                if self.proc and self.proc.poll() is None:
+                    self.proc.kill()
+                self.proc = show(path)
+            return False
 
-        store = Gtk.StringList.new(self.files)
-        self.sel = Gtk.SingleSelection(model=store, autoselect=True)
-        self.sel.connect('notify::selected', self._on_selected)
+        def on_key(self, _c, key, _code, _state):
+            if key == Gdk.KEY_Escape:
+                self.finish(False)
+                return True
+            if key in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+                self.finish(True)
+                return True
+            return False
 
-        factory = Gtk.SignalListItemFactory()
-        factory.connect('setup', self._setup)
-        factory.connect('bind', self._bind)
-
-        grid = Gtk.GridView(model=self.sel, factory=factory)
-        grid.set_single_click_activate(False)
-        grid.connect('activate', self._on_activate)
-        scroll.set_child(grid)
-
-        keys = Gtk.EventControllerKey()
-        keys.connect('key-pressed', self._on_key)
-        win.add_controller(keys)
-        win.connect('close-request', self._on_close)
-
-        win.set_child(vbox)
-        win.present()
-
-    @staticmethod
-    def _setup(_factory, item):
-        pic = Gtk.Picture(content_fit=Gtk.ContentFit.CONTAIN)
-        pic.set_size_request(THUMB_W, THUMB_H)
-        item.set_child(pic)
-
-    def _bind(self, _factory, item):
-        pic = item.get_child()
-        path = item.get_item().get_string()
-        pic._wp_path = path
-
-        def load():
-            try:
-                pb = GdkPixbuf.Pixbuf.new_from_file_at_scale(path, THUMB_W, THUMB_H, True)
-                tex = Gdk.Texture.new_for_pixbuf(pb)
-                GLib.idle_add(lambda: pic._wp_path == path and pic.set_paintable(tex))
-            except Exception:
-                pass
-
-        self.pool.submit(load)
-
-    def _selected_path(self):
-        item = self.sel.get_selected_item()
-        return item.get_string() if item else None
-
-    def _on_selected(self, *_):
-        path = self._selected_path()
-        if path:
-            self.preview(path)
-
-    def _on_activate(self, _grid, _pos):
-        path = self._selected_path()
-        if path:
-            self.confirmed = True
-            write_conf(path)
-            self._finish()
-
-    def _on_key(self, _ctrl, keyval, _code, _state):
-        if keyval == Gdk.KEY_Escape:
-            self._finish()
-            return True
-        if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
-            path = self._selected_path()
+        def finish(self, accept):
+            if self.done:
+                return
+            self.done = True
+            if self.timer:
+                GLib.source_remove(self.timer)
+            if self.proc and self.proc.poll() is None:
+                self.proc.kill()
+            self.loader.shutdown(wait=False, cancel_futures=True)
+            path = self.current() if accept else None
             if path:
-                self.confirmed = True
-                write_conf(path)
-                self._finish()
-            return True
-        return False
+                with open(STATE, 'w', encoding='utf-8') as f:
+                    f.write(path + '\n')
+                show(path, wait=True)
+            else:
+                show(self.original, wait=True)
+            self.quit()
 
-    def _on_close(self, *_):
-        self._pending = None
-        if not self.confirmed and self.original:
-            original = self.original
-
-            def restore():
-                try:
-                    target = scaled_copy(original)
-                except Exception:
-                    target = original
-                GLib.idle_add(lambda: self._set_wallpaper(target))
-
-            self.pool.submit(restore)
-        self.pool.shutdown(wait=False)
-        return False
-
-    def _finish(self):
-        self._on_close()
-        self.quit()
-
-
-def main():
-    files = collect_wallpapers()
-    if not files:
-        return 1
-    app = Picker(files, read_current())
-    app.run()
+    Picker().run()
 
 
 if __name__ == '__main__':
-    main()
+    arg = sys.argv[1] if len(sys.argv) > 1 else ''
+    if arg == '--warm':
+        warm()
+    elif arg == '--restore':
+        restore()
+    else:
+        picker()
