@@ -38,6 +38,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("swaync -c " .. hypr .. "/swaync/config.json")
     hl.exec_cmd("hyprpaper -c " .. hypr .. "/hyprpaper.conf")
     hl.exec_cmd("hypridle")
+    hl.exec_cmd("swayosd-server --top-margin 0.85")
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("hyprctl setcursor 'Bibata-Modern-Amber' 24")
     hl.exec_cmd("XDG_MENU_PREFIX=arch- kbuildsycoca6 --noincremental")
@@ -309,22 +310,22 @@ hl.bind("Print", hl.dsp.exec_cmd("bash -c 'grim - | tee /tmp/screenshot.png | wl
 hl.bind("SHIFT + Print", hl.dsp.exec_cmd("bash -c 'slurp | grim -g - - | tee /tmp/screenshot.png | wl-copy'"))
 -- Shift + Print — скриншот выделенной области
 
-hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"))
-hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"))
-hl.bind("XF86AudioStop", hl.dsp.exec_cmd("playerctl play-pause"))
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"))
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"))
--- Мультимедиа клавиши — управление плеером
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("swayosd-client --playerctl play-pause"))
+hl.bind("XF86AudioPause", hl.dsp.exec_cmd("swayosd-client --playerctl play-pause"))
+hl.bind("XF86AudioStop", hl.dsp.exec_cmd("swayosd-client --playerctl stop"))
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd("swayosd-client --playerctl next"))
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("swayosd-client --playerctl prev"))
+-- Мультимедиа клавиши — управление плеером + OSD
 
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("pactl set-sink-mute @DEFAULT_SINK@ toggle"))
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("pactl set-sink-volume @DEFAULT_SINK@ -5%"))
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("pactl set-sink-volume @DEFAULT_SINK@ +5%"))
-hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("pactl set-source-mute @DEFAULT_SOURCE@ toggle"))
--- Мультимедиа клавиши — звук и микрофон
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("swayosd-client --output-volume mute-toggle"))
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("swayosd-client --output-volume lower"))
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("swayosd-client --output-volume raise"))
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("swayosd-client --input-volume mute-toggle"))
+-- Мультимедиа клавиши — звук и микрофон + OSD
 
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 10%-"))
-hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl set +10%"))
--- Клавиши яркости — уменьшить/увеличить яркость
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("swayosd-client --brightness lower"))
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("swayosd-client --brightness raise"))
+-- Клавиши яркости — уменьшить/увеличить яркость + OSD
 
 -- --- Resize submap ---
 
