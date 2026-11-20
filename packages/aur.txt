@@ -9,3 +9,4 @@ ttf-ms-fonts
 ttf-aptos
 autojump
 wlogout
+happ-desktop-bin
