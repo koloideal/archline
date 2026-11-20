@@ -40,8 +40,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
     hl.exec_cmd("swayosd-server --top-margin 0.85")
     hl.exec_cmd(home .. "/.local/bin/startup-sound.sh")
-    hl.exec_cmd("wl-paste --type text --watch cliphist store")
-    hl.exec_cmd("wl-paste --type image --watch cliphist store")
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("hyprctl setcursor 'Bibata-Modern-Amber' 24")
     hl.exec_cmd("XDG_MENU_PREFIX=arch- kbuildsycoca6 --noincremental")
@@ -186,6 +184,14 @@ hl.config({
 --------------------------------
 
 hl.window_rule({
+    name  = "wallpaper-picker-float",
+    match = { class = "^(dev.wp.pick)$" },
+    float = true,
+    center = true,
+    size = { "monitor_w*0.60", "monitor_h*0.70" },
+})
+
+hl.window_rule({
     name  = "hotkeys-help-float",
     match = { class = "^(hotkeys-help)$" },
     float = true,
@@ -261,11 +267,8 @@ hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + H", hl.dsp.exec_cmd(home .. "/.local/bin/toggle-hotkeys-help.sh"))
 -- Super + H — справка по хоткеям / закрыть её
 
-hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(home .. "/.local/bin/wallpaper-picker.sh"))
+hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(home .. "/.local/bin/wallpaper-picker.py"))
 -- Super + W — выбор обоев
-
-hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(home .. "/.local/bin/cliphist-menu.sh"))
--- Super + C — история буфера обмена
 
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 -- Super + E — файловый менеджер
