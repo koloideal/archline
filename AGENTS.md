@@ -38,6 +38,9 @@ geo-координат или названий дисплеев — всё сп�
 - Пакеты: `packages/pacman.txt`, `packages/aur.txt`.
 
 Проверка:
+- `bash tests/run.sh` — e2e: collect → бандл → симуляция деплоя, логика
+  install.sh (source с `RA_FUNCS_ONLY=1`, главный флоу под гардом),
+  ссылки lua → .local/bin, валидность пакетных списков
 - `bash -n install.sh collect.sh sync-repo.sh`, shellcheck `-S warning`
 - `Hyprland --verify-config -c overlay/home/.config/hypr/hyprland.lua` (ошибки ловит реально)
 - После правок пересобрать: `./collect.sh` — заодно проверяет, что

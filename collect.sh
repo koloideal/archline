@@ -92,6 +92,7 @@ sed -i \
   -e 's|^\. "\$HOME/\.local/share/\.\./bin/env"$|[[ -f "$HOME/.local/bin/env" ]] \&\& . "$HOME/.local/bin/env"|' \
   -e 's|^eval "\$(mise activate zsh)"$|command -v mise \&>/dev/null \&\& eval "$(mise activate zsh)"|' \
   "$DEST/.zshrc"
+sed -i '/dart-cli-completion/d' "$DEST/.zshrc"
 
 cp -a "$ROOT/overlay/home/." "$DEST/"
 

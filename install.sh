@@ -244,15 +244,22 @@ partition() {
   mount -o fmask=0077,dmask=0077 "$ESP" "$MNT/boot"
 }
 
+# Фильтрует список пакетов под GPU: без NVIDIA выкидывает весь nvidia-блок,
+# на AMD добавляет vulkan-radeon/libva-mesa-driver.
+apply_gpu_filter() {
+  local list="$1"
+  if (( ! HAS_NVIDIA )); then
+    list="$(sed -E 's/\b(nvidia[a-z0-9_-]*|egl-wayland|libva-nvidia-driver)\b//g' <<< "$list")"
+    echo "NVIDIA не найдена — пропускаю nvidia-пакеты" >&2
+  fi
+  (( HAS_AMDGPU )) && list+=" vulkan-radeon libva-mesa-driver"
+  echo "$list"
+}
+
 install_base() {
   step "pacstrap (долго)"
   # shellcheck disable=SC2046
-  local list; list="$(pkgs "$BUNDLE/packages/pacman.txt")"
-  if (( ! HAS_NVIDIA )); then
-    list="$(sed -E 's/\b(nvidia[a-z0-9_-]*|egl-wayland|libva-nvidia-driver)\b//g' <<< "$list")"
-    echo "NVIDIA не найдена — пропускаю nvidia-пакеты"
-  fi
-  (( HAS_AMDGPU )) && list+=" vulkan-radeon libva-mesa-driver"
+  local list; list="$(apply_gpu_filter "$(pkgs "$BUNDLE/packages/pacman.txt")")"
   if (( USE_LOCAL_REPO )); then
     # AUR-пакеты в пуле уже бинарные — ставятся как обычные
     list+=" $(pkgs "$BUNDLE/packages/aur.txt")"
@@ -397,13 +404,18 @@ install_aur() {
   rm -f "$MNT/etc/sudoers.d/99-installer"
 }
 
+# Переписывает захардкоженные /home/<старое имя> на /home/<новый пользователь>.
+# Каталог Pictures пропускается (там обои-бинарники).
+rewrite_home_paths() {
+  grep -rlIZ --exclude-dir=Pictures -E '/home/[A-Za-z0-9_.-]+' "$1" \
+    | xargs -0 -r sed -i -E "s|/home/[A-Za-z0-9_.-]+|/home/$USERNAME|g"
+}
+
 deploy_dotfiles() {
   step "Конфиги, обои, тема"
   local home="$MNT/home/$USERNAME"
   tar -C "$home" -xzpf "$BUNDLE/dotfiles/home.tar.gz" --no-same-owner --no-overwrite-dir
-  # Переписываем захардкоженные /home/<старое имя> на /home/<новый пользователь>
-  grep -rlIZ --exclude-dir=Pictures -E '/home/[A-Za-z0-9_.-]+' "$home" \
-    | xargs -0 -r sed -i -E "s|/home/[A-Za-z0-9_.-]+|/home/$USERNAME|g"
+  rewrite_home_paths "$home"
 
   if [[ -f "$BUNDLE/extras/oh-my-zsh.tar.gz" ]]; then
     mkdir -p "$home/.oh-my-zsh"
@@ -457,7 +469,7 @@ finish() {
 }
 
 # Одна команда (curl | bash): репозитория рядом нет — клонируем и перезапускаемся
-if [[ ! -f "$BUNDLE/dotfiles/home.tar.gz" ]]; then
+if [[ ! -f "$BUNDLE/dotfiles/home.tar.gz" && "${RA_FUNCS_ONLY:-0}" != "1" ]]; then
   command -v git >/dev/null || die "Нужен git (в live-ISO есть)"
   step "Клонирую archline в /tmp/archline"
   rm -rf /tmp/archline
@@ -465,16 +477,18 @@ if [[ ! -f "$BUNDLE/dotfiles/home.tar.gz" ]]; then
   exec bash /tmp/archline/install.sh "$@"
 fi
 
-banner
-preflight
-choose_repo
-ask_identity
-pick_disk
-ask_password
-prepare_live
-partition
-install_base
-configure_system
-install_aur
-deploy_dotfiles
-finish
+if [[ "${RA_FUNCS_ONLY:-0}" != "1" ]]; then
+  banner
+  preflight
+  choose_repo
+  ask_identity
+  pick_disk
+  ask_password
+  prepare_live
+  partition
+  install_base
+  configure_system
+  install_aur
+  deploy_dotfiles
+  finish
+fi
