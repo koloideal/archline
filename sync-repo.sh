@@ -5,13 +5,13 @@
 #
 #  1. packages/pacman.txt + полное замыкание зависимостей → repo/*.pkg.tar.zst
 #  2. packages/aur.txt собирается makepkg'ом и кладётся туда же
-#  3. repo-add индексирует repo/myarch.db.tar.gz
+#  3. repo-add индексирует repo/archline.db.tar.gz
 #  4. extras/oh-my-zsh.tar.gz — чтобы шелл развернулся без сети
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$ROOT/repo"
-REPO_NAME="myarch"
+REPO_NAME="archline"
 EXTRAS="$ROOT/extras"
 BUILD_DIR="$(mktemp -d)"
 trap 'rm -rf "$BUILD_DIR"' EXIT

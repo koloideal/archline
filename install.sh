@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Полная установка Arch + Hyprland из этого бандла.
-# Запускать из live-ISO Arch от root:
+# Одна команда из live-ISO Arch от root:
 #
-#   udevadm trigger; udevadm settle
-#   mkdir -p /usb && mount -L <метка флешки> /usb
-#   bash /usb/myArch/install.sh
+#   bash <(curl -fsSL https://raw.githubusercontent.com/koloideal/archline/main/install.sh)
+#
+# Или с флешки: bash /usb/archline/install.sh
 #
 # Имя пользователя, hostname и часовой пояс спрашиваются при установке
 # (можно задать заранее через RA_USERNAME, RA_HOSTNAME, RA_TZ).
@@ -22,11 +22,11 @@ TIMEZONE="${RA_TZ:-}"
 RA_REPO="${RA_REPO:-}"
 
 BUNDLE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG="/tmp/relocatable-arch.log"
+LOG="/tmp/archline.log"
 MNT="/mnt"
 BTRFS_OPTS="noatime,compress=zstd:3,ssd,discard=async,space_cache=v2"
 REPO_DIR="$BUNDLE/repo"
-REPO_DB="$REPO_DIR/myarch.db.tar.gz"
+REPO_DB="$REPO_DIR/archline.db.tar.gz"
 REPO_CONF="/tmp/pacman-offline.conf"
 USE_LOCAL_REPO=0
 WIFI_SSID="" WIFI_PASS=""
@@ -210,7 +210,7 @@ prepare_live() {
 Architecture = auto
 ParallelDownloads = 5
 SigLevel = Never
-[myarch]
+[archline]
 Server = file://$REPO_DIR
 EOF
     return
@@ -448,7 +448,7 @@ EOF
 
 finish() {
   step "Готово"
-  cp "$LOG" "$MNT/var/log/relocatable-arch-install.log" || true
+  cp "$LOG" "$MNT/var/log/archline-install.log" || true
   if (( ${#AUR_FAILED[@]} )); then
     echo "Не поставились из AUR: ${AUR_FAILED[*]}"
     echo "После загрузки: bash ~/aur-failed.txt"
@@ -459,6 +459,15 @@ finish() {
   read -rp "Перезагрузить сейчас? [Y/n] " answer
   [[ "${answer,,}" == "n" ]] || reboot
 }
+
+# Одна команда (curl | bash): репозитория рядом нет — клонируем и перезапускаемся
+if [[ ! -f "$BUNDLE/dotfiles/home.tar.gz" ]]; then
+  command -v git >/dev/null || die "Нужен git (в live-ISO есть)"
+  step "Клонирую archline в /tmp/archline"
+  rm -rf /tmp/archline
+  git clone --depth 1 https://github.com/koloideal/archline.git /tmp/archline
+  exec bash /tmp/archline/install.sh "$@"
+fi
 
 banner
 preflight

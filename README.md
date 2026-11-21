@@ -1,4 +1,4 @@
-# 🚀 myArch
+# 🚀 archline
 
 **Arch Linux + Hyprland одной командой.** Запускаешь `install.sh` с
 live-ISO — получаешь полностью настроенный рабочий стол: панель, темы,
@@ -17,28 +17,28 @@ live-ISO — получаешь полностью настроенный раб
 ⚠️ **Выключи Secure Boot** в BIOS — иначе установщик остановится.
 ⚠️ **Выбранный диск стирается полностью** — вместе с Windows.
 
-### Вариант 1 — склонировать в live-среде (проще всего)
+### Вариант 1 — одна команда (проще всего)
 
-В Arch ISO есть `git`. Интернет нужен только на время установки
-(ethernet поднимется сам, Wi-Fi — `iwctl station wlan0 connect "SSID"`):
+В Arch ISO есть `git` и `curl`. Интернет нужен только на время
+установки (ethernet поднимется сам, Wi-Fi — `iwctl station wlan0 connect "SSID"`):
 
 ```sh
-git clone --depth 1 https://github.com/koloideal/myArch
-bash myArch/install.sh
+bash <(curl -fsSL https://raw.githubusercontent.com/koloideal/archline/main/install.sh)
 ```
+
+Скрипт сам клонирует репозиторий в `/tmp` и перезапускается из него.
 
 ### Вариант 2 — репозиторий на флешке Ventoy
 
 Заранее кинь репозиторий на раздел с ISO-образами, а в live-среде:
 
 ```sh
-udevadm trigger; udevadm settle
-mkdir -p /usb && mount -L Ventoy /usb
-bash /usb/myArch/install.sh
+mkdir -p /usb && mount -L Ventoy /usb && bash /usb/archline/install.sh
 ```
 
 Метка `Ventoy` стоит по умолчанию; если другая — `lsblk` покажет
 разделы, монтируй по имени: `mount /dev/sdX1 /usb`.
+Не находит метку сразу после загрузки — `udevadm trigger; udevadm settle`.
 
 ### Что спросит скрипт
 
@@ -55,7 +55,7 @@ bash /usb/myArch/install.sh
 
 ```sh
 RA_USERNAME=ivan RA_HOSTNAME=thinkpad RA_TZ=Europe/Moscow \
-  bash myArch/install.sh
+  bash /usb/archline/install.sh
 ```
 
 ---
