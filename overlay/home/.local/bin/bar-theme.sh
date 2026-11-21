@@ -17,7 +17,7 @@ r, g, b = pb.get_pixels()[0:3]
 lum = 0.2126*r + 0.7152*g + 0.0722*b
 
 if lum < 110:                      # тёмные обои -> кремовые островки
-    base_bg, fg, hl = (235, 219, 178), 'rgb(40, 40, 40)', '#fb4934'
+    base_bg, fg, hl = (235, 219, 178), 'rgb(40, 40, 40)', '#ff0000'
 else:                              # светлые обои -> тёмные островки
     base_bg, fg, hl = (40, 40, 40), 'rgb(235, 219, 178)', '#D65D0E'
 
@@ -51,10 +51,6 @@ with open(out, 'w', encoding='utf-8') as f:
 #workspaces button.active,
 #workspaces button.active label {{
     color: {hl};
-}}
-
-#workspaces button.active {{
-    border-bottom-color: {hl};
 }}
 
 #custom-power {{
