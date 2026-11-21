@@ -9,17 +9,27 @@
 # Имя пользователя, hostname и часовой пояс спрашиваются при установке
 # (можно задать заранее через RA_USERNAME, RA_HOSTNAME, RA_TZ).
 #
+# Если рядом лежит repo/ (собран sync-repo.sh) — пакеты ставятся из
+# локального пула: спросит при наличии сети, без сети — автоматически.
+# Принудительно: RA_REPO=local или RA_REPO=online.
+#
 # ВНИМАНИЕ: выбранный диск стирается полностью (Windows в том числе).
 set -Eeuo pipefail
 
 USERNAME="${RA_USERNAME:-}"
 HOSTNAME="${RA_HOSTNAME:-}"
 TIMEZONE="${RA_TZ:-}"
+RA_REPO="${RA_REPO:-}"
 
 BUNDLE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG="/tmp/relocatable-arch.log"
 MNT="/mnt"
 BTRFS_OPTS="noatime,compress=zstd:3,ssd,discard=async,space_cache=v2"
+REPO_DIR="$BUNDLE/repo"
+REPO_DB="$REPO_DIR/myarch.db.tar.gz"
+REPO_CONF="/tmp/pacman-offline.conf"
+USE_LOCAL_REPO=0
+WIFI_SSID="" WIFI_PASS=""
 
 exec > >(tee -a "$LOG") 2>&1
 trap 'echo; echo "!!! Ошибка на строке $LINENO: $BASH_COMMAND"; echo "Лог: $LOG"' ERR
@@ -82,6 +92,48 @@ setup_network() {
     online || echo "Не подключилось, ещё раз"
   done
   echo "Подключено к $WIFI_SSID"
+}
+
+pool_date() { stat -c %y "$REPO_DB" 2>/dev/null | cut -d' ' -f1; }
+
+# Если рядом лежит repo/ — локальный пул. Без сети используем его
+# автоматически, с сетью — спрашиваем. В оффлайн-режиме сеть для
+# установки не нужна вообще.
+choose_repo() {
+  step "Источник пакетов"
+  local have_net=0 in
+  online && have_net=1
+  case "$RA_REPO" in
+    local)  USE_LOCAL_REPO=1 ;;
+    online) USE_LOCAL_REPO=0 ;;
+    "") if [[ -f "$REPO_DB" ]]; then
+          if (( ! have_net )); then
+            USE_LOCAL_REPO=1
+            echo "Сети нет — ставлю из локального пула ($(pool_date))"
+          else
+            echo "Найден локальный пул (собран $(pool_date)):"
+            echo "  1) из пула — без скачиваний, версии зафиксированы"
+            echo "  2) из интернета — свежие версии"
+            read -rp "Выбор [1]: " in
+            [[ "${in:-1}" == "2" ]] || USE_LOCAL_REPO=1
+          fi
+        fi ;;
+    *) die "RA_REPO: только local или online" ;;
+  esac
+  if (( USE_LOCAL_REPO )); then
+    [[ -f "$REPO_DB" ]] \
+      || die "нет $REPO_DB — собери пул sync-repo.sh на рабочей системе"
+    echo "Источник: $REPO_DIR"
+    if (( ! have_net )); then
+      read -rp "Сети нет. Задать Wi-Fi для установленной системы? [y/N] " in
+      if [[ "${in,,}" == "y" ]]; then
+        read -rp "SSID сети: " WIFI_SSID
+        read -rsp "Пароль Wi-Fi: " WIFI_PASS; echo
+      fi
+    fi
+  else
+    setup_network
+  fi
 }
 
 ask_identity() {
@@ -150,6 +202,19 @@ ask_password() {
 prepare_live() {
   step "Подготовка live-окружения"
   timedatectl set-ntp true || true
+  if (( USE_LOCAL_REPO )); then
+    # Только локальный пул: официальные репы отключены, чтобы pacman
+    # не развёл версии между пулом и зеркалами.
+    cat > "$REPO_CONF" <<EOF
+[options]
+Architecture = auto
+ParallelDownloads = 5
+SigLevel = Never
+[myarch]
+Server = file://$REPO_DIR
+EOF
+    return
+  fi
   sed -i 's/^#\?ParallelDownloads.*/ParallelDownloads = 10/' /etc/pacman.conf
   if ! reflector --protocol https --age 24 \
        --sort rate --latest 15 --save /etc/pacman.d/mirrorlist; then
@@ -192,9 +257,16 @@ install_base() {
     echo "NVIDIA не найдена — пропускаю nvidia-пакеты"
   fi
   (( HAS_AMDGPU )) && list+=" vulkan-radeon libva-mesa-driver"
-  pacstrap -K "$MNT" $list
+  if (( USE_LOCAL_REPO )); then
+    # AUR-пакеты в пуле уже бинарные — ставятся как обычные
+    list+=" $(pkgs "$BUNDLE/packages/aur.txt")"
+    pacstrap -K -C "$REPO_CONF" "$MNT" $list
+    cp "$BUNDLE/packages/mirrorlist" "$MNT/etc/pacman.d/mirrorlist"
+  else
+    pacstrap -K "$MNT" $list
+    cp /etc/pacman.d/mirrorlist "$MNT/etc/pacman.d/mirrorlist"
+  fi
   genfstab -U "$MNT" >> "$MNT/etc/fstab"
-  cp /etc/pacman.d/mirrorlist "$MNT/etc/pacman.d/mirrorlist"
 }
 
 configure_system() {
@@ -304,6 +376,11 @@ EOF
 }
 
 install_aur() {
+  if (( USE_LOCAL_REPO )); then
+    step "AUR из пула — уже поставлены pacstrap'ом"
+    AUR_FAILED=()
+    return
+  fi
   step "AUR (yay + пакеты)"
   echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" > "$MNT/etc/sudoers.d/99-installer"
   chmod 440 "$MNT/etc/sudoers.d/99-installer"
@@ -332,8 +409,13 @@ deploy_dotfiles() {
   grep -rlIZ --exclude-dir=Pictures -E '/home/[A-Za-z0-9_.-]+' "$home" \
     | xargs -0 -r sed -i -E "s|/home/[A-Za-z0-9_.-]+|/home/$USERNAME|g"
 
-  as_user git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "/home/$USERNAME/.oh-my-zsh" \
-    || echo "oh-my-zsh не склонировался: git clone https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh"
+  if [[ -f "$BUNDLE/extras/oh-my-zsh.tar.gz" ]]; then
+    mkdir -p "$home/.oh-my-zsh"
+    tar -xzf "$BUNDLE/extras/oh-my-zsh.tar.gz" -C "$home/.oh-my-zsh" --strip-components=1
+  else
+    as_user git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "/home/$USERNAME/.oh-my-zsh" \
+      || echo "oh-my-zsh не склонировался: git clone https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh"
+  fi
 
   cat > "$home/.local/bin/firstrun.sh" <<'EOF'
 #!/bin/bash
@@ -380,7 +462,7 @@ finish() {
 
 banner
 preflight
-setup_network
+choose_repo
 ask_identity
 pick_disk
 ask_password

@@ -25,10 +25,18 @@ geo-координат или названий дисплеев — всё сп�
   диск и ставит всё. Имя пользователя/hostname/часовой пояс спрашивает
   или берёт из `RA_USERNAME`, `RA_HOSTNAME`, `RA_TZ`. После развёртки
   бандла переписывает все `/home/<старое>` на `/home/<новый>`.
+  Оффлайн-режим: если рядом `repo/myarch.db.tar.gz` — пакеты ставятся из
+  локального пула (выбор через промпт или `RA_REPO=local|online`); AUR
+  в пуле уже бинарные, yay не собирается; официальные зеркала в режиме
+  пула отключаются, чтобы не развести версии.
+- `sync-repo.sh` — на рабочей системе (не на ISO) собирает `repo/`:
+  `pactree -su` замыкание `pacman.txt` → `pacman -Sw` в кэшdir →
+  `makepkg` для `aur.txt` → `repo-add`. Плюс `extras/oh-my-zsh.tar.gz`
+  для оффлайн-развёртки шелла. `repo/` и `extras/` в `.gitignore`.
 - Пакеты: `packages/pacman.txt`, `packages/aur.txt`.
 
 Проверка:
-- `bash -n install.sh collect.sh`, shellcheck `-S warning`
+- `bash -n install.sh collect.sh sync-repo.sh`, shellcheck `-S warning`
 - `Hyprland --verify-config -c overlay/home/.config/hypr/hyprland.lua` (ошибки ловит реально)
 - После правок пересобрать: `./collect.sh` — заодно проверяет, что
   в бандл не просочились `/home/<имя>`: `tar -xzf dotfiles/home.tar.gz`
