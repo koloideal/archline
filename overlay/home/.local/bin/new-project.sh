@@ -1,18 +1,26 @@
 #!/usr/bin/env bash
-# Создаёт заготовку проекта (python / csharp / cpp) в ~/Projects и открывает в Zed.
-# Спрашивает имя и язык через wofi. Вызывается из Zed по Ctrl+Shift+N.
+# Создаёт заготовку проекта в ~/Programming_Projects/<Lang>_Projects и открывает в Zed.
+# Меню — ASCII в терминале. Вызывается из Zed по Ctrl+Shift+N.
 set -u
 
-name="$(printf '' | wofi --dmenu --prompt 'Имя проекта' --lines 1)" || exit 0
-[[ -n "$name" ]] || exit 0
+ROOT="$HOME/Programming_Projects"
+
+read -rp "Имя проекта: " name
 name="$(printf '%s' "$name" | tr 'A-Z ' 'a-z_' | tr -cd 'a-z0-9_-')"
-[[ -n "$name" ]] || exit 0
+[[ -n "$name" ]] || { echo "Отменено"; sleep 1; exit 0; }
 
-lang="$(printf 'python\ncsharp\ncpp\n' | wofi --dmenu --prompt 'Язык' --lines 3)" || exit 0
-[[ -n "$lang" ]] || exit 0
+printf '  1) python\n  2) csharp\n  3) cpp\n'
+read -rp "Язык [1-3]: " n
+case "$n" in
+    1|python) lang=python; sub=Python_Projects ;;
+    2|csharp) lang=csharp; sub=CSharp_Projects ;;
+    3|cpp)    lang=cpp;    sub=Cpp_Projects ;;
+    *) echo "Отменено"; sleep 1; exit 0 ;;
+esac
 
-dir="$HOME/Projects/$name"
+dir="$ROOT/$sub/$name"
 if [[ -e "$dir" ]]; then
+    echo "«$name» уже существует — открываю"
     zeditor "$dir" &
     exit 0
 fi
@@ -45,7 +53,8 @@ clean:
 	rm -f app
 EOF
         ;;
-    *) exit 0 ;;
 esac
 
+echo "→ $dir"
 zeditor "$dir" &
+sleep 1
