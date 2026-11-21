@@ -19,7 +19,6 @@
     ],
     "modules-right": [
         "network",
-        "bluetooth",
         "battery",
         "custom/spacer",
         "custom/powerprofile",
@@ -83,19 +82,6 @@
         "tooltip-format-wifi": "{icon} {essid} ({signalStrength}%)\n{ifname}: {ipaddr}",
         "tooltip-format-ethernet": "{ifname}: {ipaddr}",
         "on-click": "nm-connection-editor"
-    },
-
-    "bluetooth": {
-        "format": "{icon}",
-        "format-icons": {
-            "enabled": "󰂯",
-            "disabled": "󰂲"
-        },
-        "format-connected": "󰂱",
-        "format-disabled": "󰂲",
-        "format-off": "󰂲",
-        "tooltip-format-connected": "{device_alias}\n{device_address}",
-        "on-click": "blueman-manager"
     },
 
     "battery": {

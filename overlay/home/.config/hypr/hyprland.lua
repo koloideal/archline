@@ -293,7 +293,7 @@ hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:mag
 
 -- --- Window movement ---
 
-hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
+hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(home .. "/.local/bin/lock-screen.sh"))
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(home .. "/.local/bin/power-menu.sh"))
 
 local directions = { H = "left", J = "down", K = "up", L = "right" }

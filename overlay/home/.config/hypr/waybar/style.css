@@ -25,7 +25,6 @@ window#waybar {
 #pulseaudio,
 #backlight,
 #network,
-#bluetooth,
 #battery,
 #custom-powerprofile,
 #language,
@@ -93,7 +92,6 @@ window#waybar {
 #pulseaudio,
 #backlight,
 #network,
-#bluetooth,
 #battery,
 #custom-powerprofile,
 #language {
@@ -101,9 +99,7 @@ window#waybar {
     padding-right: 10px;
 }
 
-#network.disconnected,
-#bluetooth.disabled,
-#bluetooth.off {
+#network.disconnected {
     color: #928374;
 }
 
