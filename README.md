@@ -136,8 +136,6 @@ swaync, темы GTK/Qt, шелл (`.zshrc` и компания), конфиги
   из коробки поднимается только Wi-Fi (ethernet работает, если уже есть сеть)
 - **фиксированный стек**: `linux-zen`, Btrfs (`@ @home @pkg @log`),
   systemd-boot + UKI, zram. Без LUKS, без GRUB
-- **локали и раскладка**: `en_US` + `ru_RU`, ввод us/ru — авторский
-  дефолт, при желании правится в `install.sh` и `hyprland.lua`
 - **iGPU-pin гарантирован только на Intel** — udev-правило знает Intel;
   на AMD+NVIDIA Aquamarine выбирает GPU сама (обычно верно)
 
