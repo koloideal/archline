@@ -21,7 +21,7 @@ esac
 dir="$ROOT/$sub/$name"
 if [[ -e "$dir" ]]; then
     echo "«$name» уже существует — открываю"
-    zeditor "$dir" &
+    zeditor -r "$dir" &
     exit 0
 fi
 mkdir -p "$dir"
@@ -56,5 +56,5 @@ EOF
 esac
 
 echo "→ $dir"
-zeditor "$dir" &
+zeditor -r "$dir" &
 sleep 1
