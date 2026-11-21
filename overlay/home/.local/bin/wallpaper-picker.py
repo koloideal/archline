@@ -147,6 +147,7 @@ def picker():
             self.timer = 0
             self.waiting = {}
             self.textures = {}
+            self.arrow_nav = True
             from concurrent.futures import ThreadPoolExecutor
             self.loader = ThreadPoolExecutor(max_workers=4)
 
@@ -260,6 +261,8 @@ def picker():
 
         def preview(self):
             self.timer = 0
+            if self.sbar.get_search_mode() and not self.arrow_nav:
+                return False
             path = self.current()
             if path and not self.done:
                 if self.proc and self.proc.poll() is None:
@@ -279,20 +282,50 @@ def picker():
                 if self.sbar.get_search_mode() and self.entry.get_text():
                     self.entry.set_text('')
                     self.sbar.set_search_mode(False)
+                    self.grid.grab_focus()
                 else:
                     self.finish(False)
                 return True
             if key in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
                 self.finish(True)
                 return True
-            if key == Gdk.KEY_BackSpace and self.sbar.get_search_mode():
-                self.entry.set_text(self.entry.get_text()[:-1])
-                return True
-            if not state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK):
+            if key in (Gdk.KEY_Up, Gdk.KEY_Down, Gdk.KEY_Page_Up,
+                       Gdk.KEY_Page_Down, Gdk.KEY_Home, Gdk.KEY_End):
+                self.arrow_nav = True
+                if self.sbar.get_search_mode() and self.entry.has_focus():
+                    self.grid.grab_focus()
+                return False
+            if key in (Gdk.KEY_Left, Gdk.KEY_Right):
+                # при фокусе на строке — движение курсора, на сетке — навигация
+                if not self.sbar.get_search_mode() or not self.entry.has_focus():
+                    self.arrow_nav = True
+                return False
+            if self.sbar.get_search_mode() and not self.entry.has_focus():
+                # ввод вручную, пока фокус на сетке: вставка/удаление по позиции курсора
+                pos = self.entry.get_position()
+                t = self.entry.get_text()
+                if key == Gdk.KEY_BackSpace:
+                    self.entry.set_text(t[:max(pos - 1, 0)] + t[pos:])
+                    self.entry.set_position(max(pos - 1, 0))
+                    return True
+                if not state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK):
+                    ch = chr(Gdk.keyval_to_unicode(key))
+                    if ch and ch.isprintable():
+                        self.entry.set_text(t[:pos] + ch + t[pos:])
+                        self.entry.set_position(pos + 1)
+                        self.arrow_nav = False
+                        return True
+                return False
+            if not self.sbar.get_search_mode() and \
+                    not state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK):
                 ch = chr(Gdk.keyval_to_unicode(key))
                 if ch and ch.isprintable():
+                    # поиск закрыт: открываем, кладём символ и отдаём фокус строке
                     self.sbar.set_search_mode(True)
-                    self.entry.set_text(self.entry.get_text() + ch)
+                    self.entry.set_text(ch)
+                    self.entry.grab_focus()
+                    self.entry.set_position(-1)
+                    self.arrow_nav = False
                     return True
             return False
 
