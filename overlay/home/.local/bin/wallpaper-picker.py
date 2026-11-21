@@ -83,15 +83,27 @@ def saved():
 def show(path, fade=True, wait=False):
     cmd = ('awww', 'img', *(FADE if fade else ('--transition-type', 'none')), path)
     run = subprocess.run if wait else subprocess.Popen
-    return run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        return run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except OSError:
+        return None
+
+
+def bar_theme():
+    subprocess.Popen((os.path.join(HOME, '.local/bin/bar-theme.sh'),),
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def restore():
     for _ in range(50):
-        if subprocess.run(('awww', 'query'), capture_output=True).returncode == 0:
-            break
+        try:
+            if subprocess.run(('awww', 'query'), capture_output=True).returncode == 0:
+                break
+        except OSError:
+            return
         time.sleep(0.1)
     show(saved(), fade=False, wait=True)
+    bar_theme()
 
 
 def picker():
@@ -251,6 +263,7 @@ def picker():
                 show(path, wait=True)
             else:
                 show(self.original, wait=True)
+            bar_theme()
             self.quit()
 
     Picker().run()

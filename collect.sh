@@ -54,6 +54,7 @@ LEGACY=(
   .config/hypr/scripts/workspace-setup.sh
   .config/hypr/hyprpaper.conf
   .config/hypr/wallpaper
+  .config/hypr/colors.css
   .config/gtk-3.0/bookmarks
   .config/qimgv/savedState.conf
 )
