@@ -50,9 +50,6 @@ window#waybar {
     padding-right: 8px;
 }
 
-#workspaces button.active {
-    border-bottom: solid 2px transparent;
-}
 
 #backlight {
     border-radius: 0 20px 20px 0;

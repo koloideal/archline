@@ -17,9 +17,9 @@ r, g, b = pb.get_pixels()[0:3]
 lum = 0.2126*r + 0.7152*g + 0.0722*b
 
 if lum < 110:                      # тёмные обои -> кремовые островки
-    base_bg, fg, power = (235, 219, 178), 'rgb(40, 40, 40)', '#cc241d'
+    base_bg, fg, hl = (235, 219, 178), 'rgb(40, 40, 40)', '#fb4934'
 else:                              # светлые обои -> тёмные островки
-    base_bg, fg, power = (40, 40, 40), 'rgb(235, 219, 178)', '#D65D0E'
+    base_bg, fg, hl = (40, 40, 40), 'rgb(235, 219, 178)', '#D65D0E'
 
 bg = tuple(round(bx*0.85 + dx*0.15) for bx, dx in zip(base_bg, (r, g, b)))
 
@@ -48,12 +48,17 @@ with open(out, 'w', encoding='utf-8') as f:
     color: {fg};
 }}
 
+#workspaces button.active,
+#workspaces button.active label {{
+    color: {hl};
+}}
+
 #workspaces button.active {{
-    border-bottom-color: {fg};
+    border-bottom-color: {hl};
 }}
 
 #custom-power {{
-    color: {power};
+    color: {hl};
 }}
 
 #tray menu {{
