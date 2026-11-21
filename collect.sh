@@ -30,6 +30,8 @@ PATHS=(
   .config/user-dirs.locale
   .config/autostart/org.telegram.desktop.desktop
   .config/zed/settings.json
+  .config/zed/tasks.json
+  .config/zed/keymap.json
   .config/zed/themes
   .config/qimgv
   .config/xarchiver

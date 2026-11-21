@@ -19,7 +19,7 @@ geo-координат или названий дисплеев — всё сп�
   `wallpapers/girl-2.png` (дефолт; `~/.config/hypr/wallpaper` хранит
   выбранный путь и в бандл не входит), `wallpaper-picker.py`
   (GTK4-сетка, awww live-превью, `--warm`/`--restore` на старте),
-  `lock-screen.sh` (us-раскладка перед hyprlock), `chrome-focus.sh`, конфиг gammastep (geoclue2). Автологин без
+  `lock-screen.sh` (us-раскладка перед hyprlock), `chrome-focus.sh`, `run-project.sh` + `new-project.sh` (F5/Ctrl+Shift+N в Zed), конфиг gammastep (geoclue2). Автологин без
   greeter-окна; пароль только на `Super+L`/`hyprlock`.
 - `install.sh` — запускается из live-ISO от root, стирает выбранный
   диск и ставит всё. Имя пользователя/hostname/часовой пояс спрашивает

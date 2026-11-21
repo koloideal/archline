@@ -26,4 +26,4 @@ zsh zsh-autosuggestions zsh-syntax-highlighting starship eza bat fastfetch hyfet
 # Dev
 git git-lfs github-cli neovim
 # Повседневные приложения
-telegram-desktop zed vlc vlc-plugin-ffmpeg libreoffice-fresh pinta imv firefox okular
+telegram-desktop zed uv dotnet-sdk vlc vlc-plugin-ffmpeg libreoffice-fresh pinta imv firefox okular
