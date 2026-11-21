@@ -60,6 +60,13 @@ with open(out, 'w', encoding='utf-8') as f:
     background: rgb{bg};
     color: {fg};
 }}
+
+#input,
+#scroll,
+#text,
+#text:selected {{
+    color: {fg};
+}}
 ''')
 PY
 

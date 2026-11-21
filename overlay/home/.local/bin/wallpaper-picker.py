@@ -321,12 +321,14 @@ def picker():
                     return True
                 return False
             if self.sbar.get_search_mode() and not self.entry.has_focus():
-                # ввод вручную, пока фокус на сетке: вставка/удаление по позиции курсора
+                # ввод вручную, пока фокус на сетке; Backspace уводит фокус в строку
                 pos = self.entry.get_position()
                 t = self.entry.get_text()
                 if key == Gdk.KEY_BackSpace:
-                    self.entry.set_text(t[:max(pos - 1, 0)] + t[pos:])
-                    self.entry.set_position(max(pos - 1, 0))
+                    self.entry.set_text(t[:-1])
+                    self.entry.grab_focus()
+                    self.entry.set_position(-1)
+                    self.arrow_nav = False
                     return True
                 if not state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK):
                     ch = chr(Gdk.keyval_to_unicode(key))
