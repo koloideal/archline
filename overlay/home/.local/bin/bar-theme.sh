@@ -65,8 +65,18 @@ PY
 
 # waybar следит за style.css через inotify: touch (только mtime) и sed -i
 # (новый inode) не вызывают мгновенную перезагрузку — пишем в тот же inode.
+# При быстром скролле пикера запусков много — flock сериализует их,
+# уникальный tmp исключает гонку, бэкап чинит файл, если тот всё же побился.
 if [[ $? -eq 0 ]]; then
     css="$HOME/.config/hypr/waybar/style.css"
-    { grep -v '/\* theme:' "$css"; printf '/* theme:%s */\n' "$(date +%s%N)"; } > "$css.tmp"
-    cat "$css.tmp" > "$css" && rm -f "$css.tmp"
+    exec 9>"$css.lock"
+    flock -w 10 9 || exit 0
+    if [[ $(wc -l < "$css") -lt 10 && -f "$css.bak" ]]; then
+        cat "$css.bak" > "$css"
+    fi
+    tmp="$css.tmp.$$"
+    { grep -v '/\* theme:' "$css"; printf '/* theme:%s */\n' "$(date +%s%N)"; } > "$tmp"
+    cat "$tmp" > "$css" && rm -f "$tmp"
+    cat "$css" > "$css.bak"
+    exec 9>&-
 fi
