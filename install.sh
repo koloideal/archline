@@ -28,6 +28,12 @@ step() { printf '\n\033[1;33m==> %s\033[0m\n' "$*"; }
 die()  { printf '\033[1;31m!!! %s\033[0m\n' "$*"; exit 1; }
 online() { curl -fsI --max-time 5 https://archlinux.org >/dev/null 2>&1; }
 pkgs() { grep -v '^\s*#' "$1" | xargs; }
+
+# Подбор графических пакетов под реальное железо live-ISO
+GPU_INFO="$(lspci -nn 2>/dev/null || true)"
+HAS_NVIDIA=0; HAS_AMDGPU=0
+grep -qiE 'vga|3d' <<< "$GPU_INFO" && grep -qi nvidia <<< "$GPU_INFO" && HAS_NVIDIA=1
+grep -qiE '(vga|3d).*(amd|ati)' <<< "$GPU_INFO" && HAS_AMDGPU=1
 as_user() { arch-chroot "$MNT" runuser -u "$USERNAME" -- env HOME="/home/$USERNAME" "$@"; }
 
 preflight() {
@@ -164,7 +170,13 @@ partition() {
 install_base() {
   step "pacstrap (долго)"
   # shellcheck disable=SC2046
-  pacstrap -K "$MNT" $(pkgs "$BUNDLE/packages/pacman.txt")
+  local list; list="$(pkgs "$BUNDLE/packages/pacman.txt")"
+  if (( ! HAS_NVIDIA )); then
+    list="$(sed -E 's/\b(nvidia[a-z0-9_-]*|egl-wayland|libva-nvidia-driver)\b//g' <<< "$list")"
+    echo "NVIDIA не найдена — пропускаю nvidia-пакеты"
+  fi
+  (( HAS_AMDGPU )) && list+=" vulkan-radeon libva-mesa-driver"
+  pacstrap -K "$MNT" $list
   genfstab -U "$MNT" >> "$MNT/etc/fstab"
   cp /etc/pacman.d/mirrorlist "$MNT/etc/pacman.d/mirrorlist"
 }
@@ -189,9 +201,13 @@ printf '127.0.0.1 localhost\n::1 localhost\n127.0.1.1 $HOSTNAME.localdomain $HOS
 sed -i -e 's/^#Color/Color/' -e 's/^#\?ParallelDownloads.*/ParallelDownloads = 5/' /etc/pacman.conf
 sed -i '/^#\[multilib\]/{s/^#//;n;s/^#//}' /etc/pacman.conf
 
-# initramfs: kms убираем, чтобы nouveau не попал в образ (NVIDIA)
-sed -i -E '/^HOOKS=/ s/ kms//' /etc/mkinitcpio.conf
-echo 'root=PARTUUID=$root_partuuid rootflags=subvol=@ rw rootfstype=btrfs zswap.enabled=0 nvidia_drm.modeset=1 nvidia_drm.fbdev=1' > /etc/kernel/cmdline
+kparams='root=PARTUUID=$root_partuuid rootflags=subvol=@ rw rootfstype=btrfs zswap.enabled=0'
+if (( $HAS_NVIDIA )); then
+  # kms убираем, чтобы nouveau не попал в образ
+  sed -i -E '/^HOOKS=/ s/ kms//' /etc/mkinitcpio.conf
+  kparams+=' nvidia_drm.modeset=1 nvidia_drm.fbdev=1'
+fi
+echo "$kparams" > /etc/kernel/cmdline
 cat > /etc/mkinitcpio.d/linux-zen.preset <<'P'
 ALL_kver="/boot/vmlinuz-linux-zen"
 
@@ -208,7 +224,7 @@ bootctl install
 printf 'timeout 3\neditor no\n' > /boot/loader/loader.conf
 
 printf '[zram0]\ncompression-algorithm = zstd\n' > /etc/systemd/zram-generator.conf
-echo 'options nvidia NVreg_PreserveVideoMemoryAllocations=1' > /etc/modprobe.d/nvidia.conf
+(( $HAS_NVIDIA )) && echo 'options nvidia NVreg_PreserveVideoMemoryAllocations=1' > /etc/modprobe.d/nvidia.conf
 cat > /etc/udev/rules.d/61-gpu-paths.rules <<'R'
 SUBSYSTEM=="drm", KERNEL=="card*", ATTRS{vendor}=="0x8086", SYMLINK+="dri/igpu"
 SUBSYSTEM=="drm", KERNEL=="card*", ATTRS{vendor}=="0x10de", SYMLINK+="dri/dgpu"
@@ -239,7 +255,7 @@ for unit in NetworkManager bluetooth greetd systemd-timesyncd fstrim.timer \
   systemctl enable "$unit" || true
 done
 systemctl disable snapper-timeline.timer || true
-systemctl enable nvidia-suspend nvidia-hibernate nvidia-resume || true
+(( $HAS_NVIDIA )) && systemctl enable nvidia-suspend nvidia-hibernate nvidia-resume || true
 EOF
   arch-chroot "$MNT" bash /root/setup.sh
   rm -f "$MNT/root/setup.sh"

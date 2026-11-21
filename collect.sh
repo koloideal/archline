@@ -42,7 +42,6 @@ PATHS=(
   .zfunc
   .zshalias
   .gtkrc-2.0
-  .gitconfig
 )
 
 # Заменены Lua-конфигом (overlay/home/.config/hypr/hyprland.lua) или не нужны в бандле:
@@ -77,6 +76,18 @@ if [[ -f "$SRC/Downloads/gruvbox.tdesktop-theme" ]]; then
   cp -a "$SRC/Downloads/gruvbox.tdesktop-theme" "$DEST/.local/share/tg-theme/"
 else
   echo "skip (нет): Downloads/gruvbox.tdesktop-theme" >&2
+fi
+
+# kitty: kitten из чужого home (kitty-scrollback.nvim от s3rius) — на новой машине файла нет
+sed -i '/kitty_scrollback_nvim/d' "$DEST/.config/kitty/kitty.conf" 2>/dev/null || true
+
+# .gtkrc-2.0 инклудит .gtkrc-2.0.mine, которого в бандле нет
+sed -i '/gtkrc-2.0.mine/d' "$DEST/.gtkrc-2.0" 2>/dev/null || true
+
+# hyprlock: обои в бандл не входят — дефолт из overlay (.config/hypr/wallpapers/girl-2.png)
+# /home/x перепишется install.sh в /home/<новый пользователь>
+if [[ -f "$DEST/.config/hypr/hyprlock.conf" ]]; then
+  sed -i 's|^\s*path = .*|    path = /home/x/.config/hypr/wallpapers/girl-2.png|' "$DEST/.config/hypr/hyprlock.conf"
 fi
 
 # zshrc: строки, которые падают, если uv/mise не стоят
