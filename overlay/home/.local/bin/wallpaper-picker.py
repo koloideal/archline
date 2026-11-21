@@ -289,16 +289,36 @@ def picker():
             if key in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
                 self.finish(True)
                 return True
-            if key in (Gdk.KEY_Up, Gdk.KEY_Down, Gdk.KEY_Page_Up,
-                       Gdk.KEY_Page_Down, Gdk.KEY_Home, Gdk.KEY_End):
+            arrows = (Gdk.KEY_Up, Gdk.KEY_Down, Gdk.KEY_Left, Gdk.KEY_Right,
+                      Gdk.KEY_Page_Up, Gdk.KEY_Page_Down, Gdk.KEY_Home, Gdk.KEY_End)
+            if key in arrows:
                 self.arrow_nav = True
                 if self.sbar.get_search_mode() and self.entry.has_focus():
-                    self.grid.grab_focus()
-                return False
-            if key in (Gdk.KEY_Left, Gdk.KEY_Right):
-                # при фокусе на строке — движение курсора, на сетке — навигация
-                if not self.sbar.get_search_mode() or not self.entry.has_focus():
-                    self.arrow_nav = True
+                    # фокус в строке: двигаем выделение сами, SearchBar
+                    # иначе возвращает фокус entry и навигация не работает
+                    n = self.fmodel.get_n_items()
+                    if n:
+                        sel = self.sel.get_selected()
+                        if sel == Gtk.INVALID_LIST_POSITION:
+                            sel = 0
+                        cols = max(1, self.grid.get_width() // (THUMB_W + 6))
+                        if key == Gdk.KEY_Down:
+                            sel += cols
+                        elif key == Gdk.KEY_Up:
+                            sel -= cols
+                        elif key == Gdk.KEY_Right:
+                            sel += 1
+                        elif key == Gdk.KEY_Left:
+                            sel -= 1
+                        elif key in (Gdk.KEY_Page_Down, Gdk.KEY_End):
+                            sel = n - 1
+                        else:  # Page_Up / Home
+                            sel = 0
+                        sel = max(0, min(n - 1, sel))
+                        self.sel.set_selected(sel)
+                        self.grid.scroll_to(sel, Gtk.ListScrollFlags.FOCUS, None)
+                        self.grid.grab_focus()
+                    return True
                 return False
             if self.sbar.get_search_mode() and not self.entry.has_focus():
                 # ввод вручную, пока фокус на сетке: вставка/удаление по позиции курсора
