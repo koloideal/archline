@@ -63,12 +63,10 @@ with open(out, 'w', encoding='utf-8') as f:
 ''')
 PY
 
-# touch меняет только mtime — waybar его игнорирует; нужно реальное изменение содержимого
+# waybar следит за style.css через inotify: touch (только mtime) и sed -i
+# (новый inode) не вызывают мгновенную перезагрузку — пишем в тот же inode.
 if [[ $? -eq 0 ]]; then
     css="$HOME/.config/hypr/waybar/style.css"
-    if grep -q '/\* theme:' "$css"; then
-        sed -i "s|/\* theme:[^*]*\*/|/* theme:$(date +%s%N) */|" "$css"
-    else
-        printf '/* theme:%s */\n' "$(date +%s%N)" >> "$css"
-    fi
+    { grep -v '/\* theme:' "$css"; printf '/* theme:%s */\n' "$(date +%s%N)"; } > "$css.tmp"
+    cat "$css.tmp" > "$css" && rm -f "$css.tmp"
 fi
