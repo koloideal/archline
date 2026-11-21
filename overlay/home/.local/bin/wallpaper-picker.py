@@ -6,6 +6,7 @@
   wallpaper-picker.py --restore  show the saved wallpaper (session start)
 """
 import hashlib
+import json
 import os
 import subprocess
 import sys
@@ -14,6 +15,7 @@ import time
 HOME = os.path.expanduser('~')
 ROOTS = (f'{HOME}/Pictures/wallpapers', f'{HOME}/.config/hypr/wallpapers')
 STATE = f'{HOME}/.config/hypr/wallpaper'
+COUNTS = f'{HOME}/.cache/wallpaper-picks.json'
 DEFAULT = f'{HOME}/.config/hypr/wallpapers/girl-2.png'
 THUMBS = f'{HOME}/.cache/wallpaper-thumbs'
 EXTS = ('.png', '.jpg', '.jpeg', '.webp')
@@ -22,7 +24,26 @@ APP_ID = 'dev.wp.pick'
 FADE = ('--transition-type', 'fade', '--transition-duration', '0.35', '--transition-fps', '144')
 
 
+def load_counts():
+    try:
+        with open(COUNTS, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def bump_count(path):
+    counts = load_counts()
+    counts[path] = counts.get(path, 0) + 1
+    os.makedirs(os.path.dirname(COUNTS), exist_ok=True)
+    tmp = f'{COUNTS}.{os.getpid()}'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(counts, f)
+    os.replace(tmp, COUNTS)
+
+
 def collect():
+    counts = load_counts()
     items = []
     for root in ROOTS:
         for d, _, names in os.walk(root):
@@ -30,7 +51,7 @@ def collect():
                 if n.lower().endswith(EXTS):
                     p = os.path.join(d, n)
                     items.append((os.path.relpath(p, root).lower(), p))
-    items.sort()
+    items.sort(key=lambda it: (-counts.get(it[1], 0), it[0]))
     return [p for _, p in items]
 
 
@@ -89,11 +110,6 @@ def show(path, fade=True, wait=False):
         return None
 
 
-def bar_theme():
-    subprocess.Popen((os.path.join(HOME, '.local/bin/bar-theme.sh'),),
-                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-
 def restore():
     for _ in range(50):
         try:
@@ -103,7 +119,7 @@ def restore():
             return
         time.sleep(0.1)
     show(saved(), fade=False, wait=True)
-    bar_theme()
+    subprocess.Popen((os.path.expanduser('~/.local/bin/bar-theme.sh'),))
 
 
 def picker():
@@ -118,6 +134,7 @@ def picker():
     gridview { padding: 6px; background: transparent; }
     gridview > child { padding: 3px; border-radius: 6px; }
     gridview > child:selected { background: #fe8019; }
+    searchentry { margin: 6px; }
     '''
 
     class Picker(Gtk.Application):
@@ -145,7 +162,16 @@ def picker():
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 GLib.timeout_add(400, self.poll)
 
-            self.sel = Gtk.SingleSelection(model=Gtk.StringList.new(self.files))
+            self.entry = Gtk.SearchEntry(placeholder_text='Поиск обоев…')
+            self.sbar = Gtk.SearchBar(child=self.entry)
+            self.sbar.connect_entry(self.entry)
+            self.store = Gtk.StringList.new(self.files)
+            self.filt = Gtk.CustomFilter.new(self.match, None)
+            self.entry.connect('search-changed',
+                               lambda *_: self.filt.changed(Gtk.FilterChange.DIFFERENT))
+            self.entry.connect('activate', lambda *_: self.finish(True))
+            self.fmodel = Gtk.FilterListModel(model=self.store, filter=self.filt)
+            self.sel = Gtk.SingleSelection(model=self.fmodel)
             if self.original in self.files:
                 self.sel.set_selected(self.files.index(self.original))
             self.sel.connect('notify::selected', self.on_selected)
@@ -159,7 +185,10 @@ def picker():
             self.grid.connect('activate', lambda *_: self.finish(True))
 
             scroll = Gtk.ScrolledWindow(vexpand=True, child=self.grid)
-            self.win = Gtk.ApplicationWindow(application=self, title='Обои', child=scroll)
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            box.append(self.sbar)
+            box.append(scroll)
+            self.win = Gtk.ApplicationWindow(application=self, title='Обои', child=box)
             self.win.set_default_size(820, 500)
             self.win.connect('close-request', lambda *_: self.finish(False) or True)
 
@@ -240,13 +269,31 @@ def picker():
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             return False
 
-        def on_key(self, _c, key, _code, _state):
-            if key == Gdk.KEY_Escape:
-                self.finish(False)
+        def match(self, item, _data):
+            q = self.entry.get_text().strip().lower()
+            return not q or q in os.path.basename(item.get_string()).lower()
+
+        def on_key(self, _c, key, _code, state):
+            if key == Gdk.KEY_Escape or \
+                    (key == Gdk.KEY_w and state & Gdk.ModifierType.CONTROL_MASK):
+                if self.sbar.get_search_mode() and self.entry.get_text():
+                    self.entry.set_text('')
+                    self.sbar.set_search_mode(False)
+                else:
+                    self.finish(False)
                 return True
             if key in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
                 self.finish(True)
                 return True
+            if key == Gdk.KEY_BackSpace and self.sbar.get_search_mode():
+                self.entry.set_text(self.entry.get_text()[:-1])
+                return True
+            if not state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK):
+                ch = chr(Gdk.keyval_to_unicode(key))
+                if ch and ch.isprintable():
+                    self.sbar.set_search_mode(True)
+                    self.entry.set_text(self.entry.get_text() + ch)
+                    return True
             return False
 
         def finish(self, accept):
@@ -262,10 +309,11 @@ def picker():
             if path:
                 with open(STATE, 'w', encoding='utf-8') as f:
                     f.write(path + '\n')
+                bump_count(path)
                 show(path, wait=True)
             else:
                 show(self.original, wait=True)
-            bar_theme()
+            subprocess.Popen((os.path.expanduser('~/.local/bin/bar-theme.sh'),))
             self.quit()
 
     Picker().run()
