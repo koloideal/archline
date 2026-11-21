@@ -29,10 +29,6 @@ PATHS=(
   .config/user-dirs.dirs
   .config/user-dirs.locale
   .config/autostart/org.telegram.desktop.desktop
-  .config/zed/settings.json
-  .config/zed/tasks.json
-  .config/zed/keymap.json
-  .config/zed/themes
   .config/qimgv
   .config/xarchiver
   .config/pavucontrol.ini
@@ -54,6 +50,7 @@ LEGACY=(
   .config/hypr/hyprpaper.conf
   .config/hypr/wallpaper
   .config/hypr/colors.css
+  .config/hypr/sounds/startup.wav
   .config/gtk-3.0/bookmarks
   .config/qimgv/savedState.conf
 )

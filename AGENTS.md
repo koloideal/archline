@@ -9,17 +9,19 @@ geo-координат или названий дисплеев — всё сп�
 - `collect.sh` — собирает конфиги из `$HOME` в `dotfiles/home.tar.gz`,
   поверх кладёт `overlay/home`. Систему не меняет. Машинно-зависимые
   файлы (закладки GTK, state-файлы, старые конфиги) выкидываются
-  через список `LEGACY`.
+  через список `LEGACY`. Бандл закоммичен в репу — это и есть
+  «моя система из коробки» для тех, кто ставит как есть.
 - `overlay/home` — файлы, написанные руками: `hyprland.lua`
   (Lua-конфиг, Hyprland >= 0.55), `hypridle.conf`, `hyprlock.conf`
   приходит из собранных, Waybar `config.jsonc`/`style.css`,
   `power-menu.sh`, `power-profile.sh`, `happ-autostart.sh` +
-  `autostart/Happ.desktop`, `startup-sound.sh` + `sounds/startup.wav`,
-  `toggle-hotkeys-help.sh` + `hotkeys.txt`/`hotkeys.lesskey`,
+  `autostart/Happ.desktop`, `toggle-hotkeys-help.sh` + `hotkeys.txt`/`hotkeys.lesskey`,
   `wallpapers/girl-2.png` (дефолт; `~/.config/hypr/wallpaper` хранит
-  выбранный путь и в бандл не входит), `wallpaper-picker.py`
+  выбранный путь и в бандл не входит), стартовые обои в
+  `overlay/home/Pictures/wallpapers` (~10 шт, пикер ищет их там),
+  `wallpaper-picker.py`
   (GTK4-сетка, awww live-превью, `--warm`/`--restore` на старте),
-  `lock-screen.sh` (us-раскладка перед hyprlock), `chrome-focus.sh`, `run-project.sh` + `new-project.sh` (F5/Ctrl+Shift+N в Zed), конфиг gammastep (geoclue2). Автологин без
+  `lock-screen.sh` (us-раскладка перед hyprlock), `chrome-focus.sh`, конфиг gammastep (geoclue2). Автологин без
   greeter-окна; пароль только на `Super+L`/`hyprlock`.
 - `install.sh` — запускается из live-ISO от root, стирает выбранный
   диск и ставит всё. Имя пользователя/hostname/часовой пояс спрашивает

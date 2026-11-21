@@ -42,7 +42,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd(home .. "/.local/bin/wallpaper-picker.py --warm")
     hl.exec_cmd("hypridle")
     hl.exec_cmd("swayosd-server --top-margin 0.85")
-    hl.exec_cmd(home .. "/.local/bin/startup-sound.sh")
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("hyprctl setcursor 'Bibata-Modern-Amber' 24")
     hl.exec_cmd("XDG_MENU_PREFIX=arch- kbuildsycoca6 --noincremental")
@@ -235,8 +234,6 @@ hl.bind(mainMod .. " + F1", function()
     -- Workspace 1 — Chrome
     hl.dispatch(hl.dsp.focus({ workspace = 1 }))
     hl.dispatch(hl.dsp.exec_cmd("google-chrome-stable"))
-    -- Workspace 2 — Zed
-    hl.dispatch(hl.dsp.exec_cmd("zeditor ~/Programming_Projects/Python_Projects/Tunnex/", { workspace = "2 silent" }))
     -- Workspace 3 — Telegram + Kitty
     hl.exec_cmd("pkill -9 Telegram")
     hl.timer(function()
