@@ -2,10 +2,10 @@
 # Подстраивает фон островков waybar под обои:
 # тёмные обои -> кремовые островки, светлые -> тёмные; лёгкий тинт доминантным цветом.
 set -u
-wp="$(cat "$HOME/.config/hypr/wallpaper" 2>/dev/null || true)"
+wp="${1:-$(cat "$HOME/.config/hypr/wallpaper" 2>/dev/null || true)}"
 [[ -f "$wp" ]] || exit 0
 
-python3 - "$wp" "$HOME/.config/hypr/colors.css" <<'PY' && touch "$HOME/.config/hypr/waybar/style.css"
+python3 - "$wp" "$HOME/.config/hypr/colors.css" <<'PY'
 import sys
 import gi
 gi.require_version('GdkPixbuf', '2.0')
@@ -62,3 +62,13 @@ with open(out, 'w', encoding='utf-8') as f:
 }}
 ''')
 PY
+
+# touch меняет только mtime — waybar его игнорирует; нужно реальное изменение содержимого
+if [[ $? -eq 0 ]]; then
+    css="$HOME/.config/hypr/waybar/style.css"
+    if grep -q '/\* theme:' "$css"; then
+        sed -i "s|/\* theme:[^*]*\*/|/* theme:$(date +%s%N) */|" "$css"
+    else
+        printf '/* theme:%s */\n' "$(date +%s%N)" >> "$css"
+    fi
+fi

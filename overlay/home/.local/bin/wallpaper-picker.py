@@ -236,6 +236,8 @@ def picker():
                 if self.proc and self.proc.poll() is None:
                     self.proc.kill()
                 self.proc = show(path)
+                subprocess.Popen((os.path.join(HOME, '.local/bin/bar-theme.sh'), path),
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             return False
 
         def on_key(self, _c, key, _code, _state):
