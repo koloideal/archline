@@ -59,7 +59,7 @@ LEGACY=(
 for p in "${PATHS[@]}"; do
   if [[ -e "$SRC/$p" ]]; then
     mkdir -p "$DEST/$(dirname "$p")"
-    cp -a "$SRC/$p" "$DEST/$p"
+    cp -aH "$SRC/$p" "$DEST/$p"
   else
     echo "skip (нет): $p" >&2
   fi

@@ -5,13 +5,13 @@ btrfs-progs dosfstools ntfs-3g efibootmgr zram-generator sudo nano less man-db m
 networkmanager network-manager-applet wpa_supplicant bluez bluez-utils blueman
 # Звук, медиа-клавиши, OSD
 pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber libpulse gst-plugin-pipewire
-pavucontrol playerctl brightnessctl swayosd ffmpeg
+pavucontrol playerctl brightnessctl swayosd ddcutil ffmpeg
 # Графика: mesa всегда; NVIDIA-блок install.sh пропускает без NVIDIA, AMD дополняет сам
 mesa vulkan-intel intel-media-driver nvidia-open-dkms nvidia-utils nvidia-prime egl-wayland libva-nvidia-driver
 # Hyprland и окружение
 hyprland hypridle hyprlock awww uwsm greetd xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
 xdg-user-dirs qt5-wayland qt6-wayland waybar wofi swaync kitty grim slurp wl-clipboard
-gammastep geoclue snixembed udiskie polkit-gnome wev power-profiles-daemon python-gobject
+gammastep geoclue udiskie polkit-gnome wev power-profiles-daemon python-gobject
 # Файлы, архивы, съёмные носители
 thunar thunar-archive-plugin thunar-volman tumbler ffmpegthumbnailer gvfs gvfs-mtp gvfs-smb gvfs-afc xarchiver
 file-roller unzip zip 7zip unrar

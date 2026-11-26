@@ -1,7 +1,7 @@
 // -*- mode: jsonc -*-
 {
     "position": "top",
-    "height": 32,
+    "height": 36,
     "spacing": 0,
     "margin-top": 8,
     "margin-left": 12,
@@ -12,7 +12,7 @@
         "custom/power",
         "clock",
         "pulseaudio",
-        "backlight"
+        "custom/brightness"
     ],
     "modules-center": [
         "hyprland/workspaces"
@@ -20,7 +20,6 @@
     "modules-right": [
         "network",
         "battery",
-        "custom/spacer",
         "custom/powerprofile",
         "hyprland/language",
         "tray",
@@ -33,12 +32,6 @@
         "on-click": "$HOME/.local/bin/power-menu.sh"
     },
 
-    "custom/spacer": {
-        "format": "{}",
-        "exec": "printf ' '",
-        "interval": "once",
-        "tooltip": false
-    },
 
 
     "hyprland/workspaces": {
@@ -63,12 +56,16 @@
         "on-click-right": "swayosd-client --output-volume mute-toggle"
     },
 
-    "backlight": {
-        "format": "{icon} {percent}%",
-        "format-icons": ["󰃞", "󰃟", "󰃠"],
-        "tooltip": false,
-        "on-scroll-up": "swayosd-client --brightness +2",
-        "on-scroll-down": "swayosd-client --brightness -2"
+    "custom/brightness": {
+        "format": "{}",
+        "exec": "$HOME/.local/bin/monitor-brightness.sh get",
+        "return-type": "json",
+        "interval": 30,
+        "signal": 8,
+        "on-scroll-up": "$HOME/.local/bin/monitor-brightness.sh up",
+        "on-scroll-down": "$HOME/.local/bin/monitor-brightness.sh down",
+        "on-click-middle": "$HOME/.local/bin/monitor-brightness.sh sync",
+        "tooltip": true
     },
 
     "network": {

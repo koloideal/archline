@@ -28,7 +28,7 @@ check "bash -n sync-repo.sh"  'bash -n sync-repo.sh'
 
 # ---------- collect.sh → бандл ----------
 step "collect.sh → бандл"
-./collect.sh >/dev/null 2>&1
+if ./collect.sh >/dev/null 2>&1; then ok "collect.sh отрабатывает"; else bad "collect.sh отрабатывает"; fi
 check "home.tar.gz собран"      '[[ -f dotfiles/home.tar.gz ]]'
 tar -xzf dotfiles/home.tar.gz -C "$T"
 

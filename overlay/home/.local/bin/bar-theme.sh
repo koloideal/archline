@@ -33,7 +33,7 @@ with open(out, 'w', encoding='utf-8') as f:
 #workspaces,
 #clock,
 #pulseaudio,
-#backlight,
+#custom-brightness,
 #network,
 #battery,
 #custom-powerprofile,
