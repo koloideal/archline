@@ -23,8 +23,9 @@ geo-координат или названий дисплеев — всё сп�
   (GTK4-сетка, awww live-превью, `--warm`/`--restore` на старте),
   `lock-screen.sh` (us-раскладка перед hyprlock), `chrome-focus.sh`,
   `screenshot.sh` (grim/slurp → `~/Pictures/Screenshots` + wl-copy),
-  `clipboard-menu.py` + `wofi/clipboard.css` (cliphist-история по Super+C,
-  paste через `hl.dsp.send_shortcut({ mods = "SHIFT", key = "Insert" })`), конфиг gammastep (geoclue2). Автологин без
+  `clipboard-menu.py` (cliphist-история по Super+C: кастомное GTK4-окно
+  `dev.clipboard.menu`, поиск, превью изображений, вставка в предыдущее окно
+  через Ctrl+V/Ctrl+Shift+V, fallback Shift+Insert), конфиг gammastep (geoclue2). Автологин без
   greeter-окна; пароль только на `Super+L`/`hyprlock`.
 - `install.sh` — запускается из live-ISO от root, стирает выбранный
   диск и ставит всё. Имя пользователя/hostname/часовой пояс спрашивает
@@ -48,8 +49,12 @@ geo-координат или названий дисплеев — всё сп�
 - `bash -n install.sh collect.sh sync-repo.sh`, shellcheck `-S warning`
 - `Hyprland --verify-config` напрямую в живой сессии не запускать: verify
   исполняет top-level `hl.exec_cmd` (`gsettings`); в `tests/run.sh` он изолирован.
-- После правок пересобрать: `./collect.sh` — заодно проверяет, что
-  в бандл не просочились `/home/<имя>`: `tar -xzf dotfiles/home.tar.gz`
-  в tmp и `grep -rn '/home/'`.
+- После точечных правок синхронизировать бандл фрагментарно: распаковать
+  `dotfiles/home.tar.gz` во временный каталог, заменить только затронутые
+  файлы из `overlay/home` и упаковать обратно. Живая система может содержать
+  конфиги, которые не переносятся в бандл; полный `./collect.sh` нужен только
+  для осознанного полного снапшота. В любом случае проверить, что в бандл не
+  просочились `/home/<имя>`: `tar -xzf dotfiles/home.tar.gz` в tmp и
+  `grep -rn '/home/'`.
 
 С Lua-конфигом `hyprctl dispatch` принимает Lua: `hyprctl dispatch 'hl.dsp.focus({ workspace = 1 })'`.

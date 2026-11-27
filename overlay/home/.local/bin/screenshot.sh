@@ -2,7 +2,11 @@
 set -u
 
 mode="${1:-full}"
-pictures="$(xdg-user-dir PICTURES 2>/dev/null || printf '%s' "$HOME/Pictures")"
+pictures="$(xdg-user-dir PICTURES 2>/dev/null || true)"
+pictures="${pictures%/}"
+if [[ -z "$pictures" || "$pictures" == "$HOME" ]]; then
+    pictures="$HOME/Pictures"
+fi
 dir="$pictures/Screenshots"
 mkdir -p "$dir"
 

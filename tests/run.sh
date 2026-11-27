@@ -78,6 +78,8 @@ check "bash -n collect.sh"    'bash -n collect.sh'
 check "bash -n sync-repo.sh"  'bash -n sync-repo.sh'
 check "bash -n screenshot.sh" 'bash -n overlay/home/.local/bin/screenshot.sh'
 check "clipboard-menu.py syntax" 'python3 -c "import ast; ast.parse(open(\"overlay/home/.local/bin/clipboard-menu.py\").read())"'
+check "clipboard без wofi" '! grep -qi wofi overlay/home/.local/bin/clipboard-menu.py'
+check "clipboard window rule" 'grep -q "dev.clipboard.menu" overlay/home/.config/hypr/hyprland.lua'
 check "cliphist в pacman.txt" 'grep -qw cliphist packages/pacman.txt'
 
 # ---------- collect.sh → бандл ----------

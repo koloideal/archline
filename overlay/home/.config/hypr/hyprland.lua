@@ -184,6 +184,14 @@ hl.config({
 --------------------------------
 
 hl.window_rule({
+    name  = "clipboard-menu-float",
+    match = { class = "^(dev.clipboard.menu)$" },
+    float = true,
+    center = true,
+    size = { "monitor_w*0.36", "monitor_h*0.54" },
+})
+
+hl.window_rule({
     name  = "wallpaper-picker-float",
     match = { class = "^(dev.wp.pick)$" },
     float = true,
