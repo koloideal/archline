@@ -1,0 +1,62 @@
+@import "../colors.css";
+
+window {
+    background-color: transparent;
+    color: @color_fg;
+}
+
+#outer-box {
+    background-color: @color_bg;
+    border: 2px solid @color_accent;
+    border-radius: 20px;
+    padding: 8px;
+}
+
+#input {
+    margin: 0 0 8px;
+    padding: 10px 14px;
+    border: 1px solid alpha(@color_accent, 0.70);
+    border-radius: 14px;
+    background-color: alpha(#1d2021, 0.72);
+    color: @color_fg;
+    font-family: "Onest", "JetBrainsMono Nerd Font", sans-serif;
+    font-size: 15px;
+}
+
+#inner-box {
+    background-color: transparent;
+}
+
+#scroll {
+    background-color: transparent;
+    padding: 2px;
+}
+
+#entry {
+    min-height: 42px;
+    margin: 3px;
+    padding: 5px 10px;
+    border: 1px solid transparent;
+    border-radius: 13px;
+    background-color: alpha(#1d2021, 0.36);
+}
+
+#entry:selected {
+    border-color: @color_accent;
+    background-color: alpha(@color_accent, 0.16);
+}
+
+#img {
+    margin-right: 12px;
+    border-radius: 8px;
+}
+
+#text {
+    color: @color_fg;
+    font-family: "Onest", "JetBrainsMono Nerd Font", sans-serif;
+    font-size: 13px;
+}
+
+#text:selected {
+    color: @color_fg;
+}

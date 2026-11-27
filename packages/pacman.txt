@@ -10,7 +10,7 @@ pavucontrol playerctl brightnessctl swayosd ddcutil ffmpeg
 mesa vulkan-intel intel-media-driver nvidia-open-dkms nvidia-utils nvidia-prime egl-wayland libva-nvidia-driver
 # Hyprland и окружение
 hyprland hypridle hyprlock awww uwsm greetd xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
-xdg-user-dirs qt5-wayland qt6-wayland waybar wofi swaync kitty grim slurp wl-clipboard
+xdg-user-dirs qt5-wayland qt6-wayland waybar wofi swaync kitty grim slurp wl-clipboard cliphist
 gammastep geoclue udiskie polkit-gnome wev power-profiles-daemon python-gobject
 # Файлы, архивы, съёмные носители
 thunar thunar-archive-plugin thunar-volman tumbler ffmpegthumbnailer gvfs gvfs-mtp gvfs-smb gvfs-afc xarchiver

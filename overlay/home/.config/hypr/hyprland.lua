@@ -39,6 +39,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd(home .. "/.local/bin/wallpaper-picker.py --restore")
     hl.exec_cmd(home .. "/.local/bin/wallpaper-picker.py --warm")
+    hl.exec_cmd(home .. "/.local/bin/clipboard-menu.py --daemon")
     hl.exec_cmd("hypridle")
     hl.exec_cmd("swayosd-server --top-margin 0.85")
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
@@ -261,6 +262,9 @@ hl.bind(mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("uwsm stop"))
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(menu))
 -- Super + D — меню приложений
 
+hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(home .. "/.local/bin/clipboard-menu.py"))
+-- Super + C — история буфера обмена
+
 hl.bind(mainMod .. " + H", hl.dsp.exec_cmd(home .. "/.local/bin/toggle-hotkeys-help.sh"))
 -- Super + H — справка по хоткеям / закрыть её
 
@@ -328,9 +332,11 @@ hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 
 -- --- Utilities ---
 
-hl.bind("Print", hl.dsp.exec_cmd("bash -c 'grim - | tee /tmp/screenshot.png | wl-copy'"))
-hl.bind("SHIFT + Print", hl.dsp.exec_cmd("bash -c 'slurp | grim -g - - | tee /tmp/screenshot.png | wl-copy'"))
--- Shift + Print — скриншот выделенной области
+hl.bind("Print", hl.dsp.exec_cmd(home .. "/.local/bin/screenshot.sh full"))
+-- Print — скриншот экрана в ~/Pictures/Screenshots + буфер обмена
+
+hl.bind("SHIFT + Print", hl.dsp.exec_cmd(home .. "/.local/bin/screenshot.sh area"))
+-- Shift + Print — скриншот области в ~/Pictures/Screenshots + буфер обмена
 
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("swayosd-client --playerctl play-pause"))
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("swayosd-client --playerctl play-pause"))

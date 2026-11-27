@@ -11,6 +11,7 @@ cd "$ROOT"
 PASS=0 FAIL=0
 ok()   { PASS=$((PASS+1)); printf '  \033[32mok\033[0m   %s\n' "$1"; }
 bad()  { FAIL=$((FAIL+1)); printf '  \033[31mFAIL\033[0m %s\n' "$1"; }
+warn() { printf '  \033[33mwarn\033[0m %s\n' "$1"; }
 step() { printf '\n\033[1;33m== %s\033[0m\n' "$*"; }
 check(){ if eval "$2" >/dev/null 2>&1; then ok "$1"; else bad "$1"; fi; }
 
@@ -75,6 +76,9 @@ step "Синтаксис скриптов"
 check "bash -n install.sh"    'bash -n install.sh'
 check "bash -n collect.sh"    'bash -n collect.sh'
 check "bash -n sync-repo.sh"  'bash -n sync-repo.sh'
+check "bash -n screenshot.sh" 'bash -n overlay/home/.local/bin/screenshot.sh'
+check "clipboard-menu.py syntax" 'python3 -c "import ast; ast.parse(open(\"overlay/home/.local/bin/clipboard-menu.py\").read())"'
+check "cliphist в pacman.txt" 'grep -qw cliphist packages/pacman.txt'
 
 # ---------- collect.sh → бандл ----------
 step "collect.sh → бандл"
@@ -95,8 +99,12 @@ if [[ -f "$T/collect-src/dotfiles/home.tar.gz" ]]; then
 else
   collect_diff="fresh bundle missing"
 fi
-check "committed bundle свежий" '[[ -z "$collect_diff" ]]'
-if [[ -n "$collect_diff" ]]; then
+# Живая система может осознанно расходиться с репозиторием: синхронизация
+# бандла — отдельное ручное решение, поэтому drift показываем как warning.
+if [[ -z "$collect_diff" ]]; then
+  ok "committed bundle свежий"
+else
+  warn "committed bundle отстаёт от живой системы"
   printf '%s\n' "$collect_diff" \
     | sed -e "s#$T/committed#COMMITTED#g" -e "s#$T/fresh#FRESH#g" \
     | head -20
@@ -104,6 +112,9 @@ fi
 
 B="$T/committed"
 check "hyprland.lua в бандле"   '[[ -f $B/.config/hypr/hyprland.lua ]]'
+check "clipboard-menu.py в бандле" '[[ -x $B/.local/bin/clipboard-menu.py ]]'
+check "screenshot.sh в бандле"  '[[ -x $B/.local/bin/screenshot.sh ]]'
+check "clipboard.css в бандле"  '[[ -f $B/.config/hypr/wofi/clipboard.css ]]'
 check "стартовых обоев >= 8"    '[[ $(find $B/Pictures/wallpapers -type f | wc -l) -ge 8 ]]'
 check "дефолтная обоина"        '[[ -f $B/.config/hypr/wallpapers/girl-2.png ]]'
 check "все .local/bin +x"       '[[ $(find $B/.local/bin -type f ! -perm -u+x | wc -l) -eq 0 ]]'

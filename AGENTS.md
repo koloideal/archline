@@ -21,7 +21,10 @@ geo-координат или названий дисплеев — всё сп�
   `overlay/home/Pictures/wallpapers` (~10 шт, пикер ищет их там),
   `wallpaper-picker.py`
   (GTK4-сетка, awww live-превью, `--warm`/`--restore` на старте),
-  `lock-screen.sh` (us-раскладка перед hyprlock), `chrome-focus.sh`, конфиг gammastep (geoclue2). Автологин без
+  `lock-screen.sh` (us-раскладка перед hyprlock), `chrome-focus.sh`,
+  `screenshot.sh` (grim/slurp → `~/Pictures/Screenshots` + wl-copy),
+  `clipboard-menu.py` + `wofi/clipboard.css` (cliphist-история по Super+C,
+  paste через `hl.dsp.send_shortcut({ mods = "SHIFT", key = "Insert" })`), конфиг gammastep (geoclue2). Автологин без
   greeter-окна; пароль только на `Super+L`/`hyprlock`.
 - `install.sh` — запускается из live-ISO от root, стирает выбранный
   диск и ставит всё. Имя пользователя/hostname/часовой пояс спрашивает

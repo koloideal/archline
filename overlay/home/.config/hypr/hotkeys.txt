@@ -5,6 +5,7 @@ Hyprland — главные горячие клавиши
   Super + Enter          терминал
   Super + D              меню приложений
   Super + E              файловый менеджер
+  Super + C              история буфера обмена
   Super + H              эта справка / закрыть её
   Super + L              заблокировать экран
   Super + X              меню питания
@@ -26,8 +27,8 @@ Workspaces
   Caps Lock / Super+Space  переключить us/ru
 
 Скриншоты и медиа
-  Print                  скриншот экрана
-  Shift + Print          скриншот области
+  Print                  скриншот экрана в ~/Pictures/Screenshots
+  Shift + Print          скриншот области в ~/Pictures/Screenshots
   Volume/Brightness      громкость/яркость с OSD
   Media keys             play/pause/next/prev/stop
 
