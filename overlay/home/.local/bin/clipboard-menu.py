@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 HOME = Path.home()
+os.environ['PATH'] = str(HOME / '.local/bin') + os.pathsep + os.environ.get('PATH', '')
 CACHE_ROOT = Path(os.environ.get('XDG_CACHE_HOME', HOME / '.cache'))
 CACHE = CACHE_ROOT / 'clipboard-menu'
 WOFI_CONF = HOME / '.config/hypr/wofi/config.conf'
