@@ -40,9 +40,11 @@ geo-координат или названий дисплеев — всё сп�
 Проверка:
 - `bash tests/run.sh` — e2e: collect → бандл → симуляция деплоя, логика
   install.sh (source с `RA_FUNCS_ONLY=1`, главный флоу под гардом),
-  ссылки lua → .local/bin, валидность пакетных списков
+  ссылки lua → .local/bin, валидность пакетных списков. Тесты не меняют
+  committed-бандл и gsettings; падают, если committed-бандл отстал от свежего collect.
 - `bash -n install.sh collect.sh sync-repo.sh`, shellcheck `-S warning`
-- `Hyprland --verify-config -c overlay/home/.config/hypr/hyprland.lua` (ошибки ловит реально)
+- `Hyprland --verify-config` напрямую в живой сессии не запускать: verify
+  исполняет top-level `hl.exec_cmd` (`gsettings`); в `tests/run.sh` он изолирован.
 - После правок пересобрать: `./collect.sh` — заодно проверяет, что
   в бандл не просочились `/home/<имя>`: `tar -xzf dotfiles/home.tar.gz`
   в tmp и `grep -rn '/home/'`.

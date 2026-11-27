@@ -18,7 +18,57 @@ check(){ if eval "$2" >/dev/null 2>&1; then ok "$1"; else bad "$1"; fi; }
 src() { RA_FUNCS_ONLY=1 source "$ROOT/install.sh"; }
 
 T="$(mktemp -d)"
-trap 'rm -rf "$T" /tmp/archline' EXIT
+archline_bootstrap_ran=0
+cleanup() {
+  if (( archline_bootstrap_ran )); then rm -rf /tmp/archline; fi
+  rm -rf "$T"
+}
+trap cleanup EXIT
+
+bundle_hash_before="$(sha256sum dotfiles/home.tar.gz 2>/dev/null | cut -d' ' -f1)"
+
+gsettings_state() {
+  command -v gsettings >/dev/null 2>&1 || return 0
+  local schema key
+  while read -r schema key; do
+    printf '%s/%s=' "$schema" "$key"
+    gsettings get "$schema" "$key" 2>/dev/null || printf '<unavailable>'
+    printf '\n'
+  done <<'EOF'
+org.gnome.desktop.interface gtk-theme
+org.gnome.desktop.interface icon-theme
+org.gnome.desktop.interface font-name
+org.gnome.desktop.interface cursor-theme
+org.gnome.desktop.interface color-scheme
+org.gnome.desktop.input-sources sources
+EOF
+}
+
+gsettings_before="$(gsettings_state)"
+
+verify_hyprland() {
+  local cfg="$ROOT/overlay/home/.config/hypr/hyprland.lua"
+  local fakehome="$T/verify-home" rundir="$T/verify-runtime" bindir="$T/verify-bin"
+  mkdir -p "$fakehome" "$rundir" "$bindir"
+  chmod 700 "$rundir"
+  cat > "$bindir/gsettings" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+  chmod +x "$bindir/gsettings"
+
+  if command -v dbus-run-session >/dev/null 2>&1; then
+    env HOME="$fakehome" XDG_CONFIG_HOME="$fakehome/.config" \
+      XDG_CACHE_HOME="$fakehome/.cache" XDG_STATE_HOME="$fakehome/.local/state" \
+      XDG_RUNTIME_DIR="$rundir" PATH="$bindir:$PATH" \
+      dbus-run-session -- Hyprland --verify-config -c "$cfg"
+  else
+    env -u DBUS_SESSION_BUS_ADDRESS HOME="$fakehome" \
+      XDG_CONFIG_HOME="$fakehome/.config" XDG_CACHE_HOME="$fakehome/.cache" \
+      XDG_STATE_HOME="$fakehome/.local/state" XDG_RUNTIME_DIR="$rundir" \
+      PATH="$bindir:$PATH" Hyprland --verify-config -c "$cfg"
+  fi
+}
 
 # ---------- Синтаксис ----------
 step "Синтаксис скриптов"
@@ -28,31 +78,62 @@ check "bash -n sync-repo.sh"  'bash -n sync-repo.sh'
 
 # ---------- collect.sh → бандл ----------
 step "collect.sh → бандл"
-if ./collect.sh >/dev/null 2>&1; then ok "collect.sh отрабатывает"; else bad "collect.sh отрабатывает"; fi
-check "home.tar.gz собран"      '[[ -f dotfiles/home.tar.gz ]]'
-tar -xzf dotfiles/home.tar.gz -C "$T"
+check "committed home.tar.gz есть" '[[ -f dotfiles/home.tar.gz ]]'
+mkdir -p "$T/committed" "$T/fresh" "$T/collect-src" "$T/deploy"
+tar -xzf dotfiles/home.tar.gz -C "$T/committed"
+cp -a collect.sh overlay "$T/collect-src/"
 
-check "hyprland.lua в бандле"   '[[ -f $T/.config/hypr/hyprland.lua ]]'
-check "стартовых обоев >= 8"    '[[ $(find $T/Pictures/wallpapers -type f | wc -l) -ge 8 ]]'
-check "дефолтная обоина"        '[[ -f $T/.config/hypr/wallpapers/girl-2.png ]]'
-check "все .local/bin +x"       '[[ $(find $T/.local/bin -type f ! -perm -u+x | wc -l) -eq 0 ]]'
-check "нет .gitconfig"          '! find $T -name .gitconfig | grep -q .'
-check "нет tdata телеги"        '! find $T -type d -name tdata | grep -q .'
-check "нет gtk-закладок"        '! find $T -name bookmarks | grep -q .'
-check "нет /home/s3rius"        '! grep -rlI "/home/s3rius" $T | grep -q .'
-check "нет /home/barelkvaza"    '! grep -rlI "/home/barelkvaza" $T | grep -q .'
+if (cd "$T/collect-src" && ./collect.sh >/dev/null 2>&1); then
+  ok "collect.sh отрабатывает в изолированной копии"
+else
+  bad "collect.sh отрабатывает в изолированной копии"
+fi
+check "fresh home.tar.gz собран" '[[ -f $T/collect-src/dotfiles/home.tar.gz ]]'
+if [[ -f "$T/collect-src/dotfiles/home.tar.gz" ]]; then
+  tar -xzf "$T/collect-src/dotfiles/home.tar.gz" -C "$T/fresh"
+  collect_diff="$(diff -qr --no-dereference "$T/committed" "$T/fresh" 2>&1 || true)"
+else
+  collect_diff="fresh bundle missing"
+fi
+check "committed bundle свежий" '[[ -z "$collect_diff" ]]'
+if [[ -n "$collect_diff" ]]; then
+  printf '%s\n' "$collect_diff" \
+    | sed -e "s#$T/committed#COMMITTED#g" -e "s#$T/fresh#FRESH#g" \
+    | head -20
+fi
+
+B="$T/committed"
+check "hyprland.lua в бандле"   '[[ -f $B/.config/hypr/hyprland.lua ]]'
+check "стартовых обоев >= 8"    '[[ $(find $B/Pictures/wallpapers -type f | wc -l) -ge 8 ]]'
+check "дефолтная обоина"        '[[ -f $B/.config/hypr/wallpapers/girl-2.png ]]'
+check "все .local/bin +x"       '[[ $(find $B/.local/bin -type f ! -perm -u+x | wc -l) -eq 0 ]]'
+check "нет .gitconfig"          '! find $B -name .gitconfig | grep -q .'
+check "нет tdata телеги"        '! find $B -type d -name tdata | grep -q .'
+check "нет gtk-закладок"        '! find $B -name bookmarks | grep -q .'
+check "нет /home/s3rius"        '! grep -rlI "/home/s3rius" $B | grep -q .'
+check "нет /home/barelkvaza"    '! grep -rlI "/home/barelkvaza" $B | grep -q .'
 
 # /home/<автор> в wofi/desktop — штатно переписывается при установке:
 # симулируем деплой и проверяем, что старых путей не осталось
+cp -a "$B/." "$T/deploy/"
 ( RA_FUNCS_ONLY=1 source "$ROOT/install.sh"; USERNAME=newuser
-  rewrite_home_paths "$T" >/dev/null 2>&1 )
+  rewrite_home_paths "$T/deploy" >/dev/null 2>&1 )
 check "после rewrite нет старых /home" \
-  '! grep -rlIE "/home/(kolo|s3rius|barelkvaza|olduser)" $T | grep -q .'
+  '! grep -rlIE "/home/(kolo|s3rius|barelkvaza|olduser)" $T/deploy | grep -q .'
 
 # ---------- Конфиги ----------
 step "Конфиги"
-check "hyprland.lua --verify-config" \
-  'Hyprland --verify-config -c overlay/home/.config/hypr/hyprland.lua'
+top_exec="$(grep -E '^hl\.exec_cmd\(' overlay/home/.config/hypr/hyprland.lua \
+  | grep -vE '^hl\.exec_cmd\("gsettings ' || true)"
+check "top-level exec только gsettings" '[[ -z "$top_exec" ]]'
+if [[ -n "$top_exec" ]]; then printf '%s\n' "$top_exec"; fi
+
+if verify_hyprland >"$T/hyprland-verify.log" 2>&1; then
+  ok "hyprland.lua --verify-config изолированно"
+else
+  bad "hyprland.lua --verify-config изолированно"
+  sed -n '1,80p' "$T/hyprland-verify.log"
+fi
 
 # скрипты, на которые ссылается lua через ~/.local/bin/, должны быть в overlay
 missing=$(grep -oP 'local/bin/\K[A-Za-z0-9._-]+' overlay/home/.config/hypr/hyprland.lua \
@@ -117,9 +198,14 @@ cat > "$T/bin/git" <<G
 [[ "\$1" == clone ]] && cp -r "$ROOT" "\${@: -1}"
 G
 chmod +x "$T/bin/git"
-out="$(PATH="$T/bin:$PATH" bash "$T/fake/install.sh" 2>&1 || true)"
-check "клонирует в /tmp/archline" 'grep -q "Клонирую archline" <<< "$out"'
-check "доходит до preflight"      'grep -q "Запусти от root\|UEFI\|Secure Boot" <<< "$out"'
+if [[ -e /tmp/archline ]]; then
+  echo "  (бутстрап-тест пропущен: /tmp/archline уже существует)"
+else
+  archline_bootstrap_ran=1
+  out="$(PATH="$T/bin:$PATH" bash "$T/fake/install.sh" 2>&1 || true)"
+  check "клонирует в /tmp/archline" 'grep -q "Клонирую archline" <<< "$out"'
+  check "доходит до preflight"      'grep -q "Запусти от root\|UEFI\|Secure Boot" <<< "$out"'
+fi
 
 # ---------- Пакетные списки ----------
 step "pacman.txt: все пакеты существуют"
@@ -137,6 +223,12 @@ if curl -fsI --max-time 5 https://aur.archlinux.org >/dev/null 2>&1; then
 else
   echo "  (AUR-проверка пропущена: нет сети)"
 fi
+
+# ---------- Изоляция ----------
+step "Изоляция тестов"
+bundle_hash_after="$(sha256sum dotfiles/home.tar.gz 2>/dev/null | cut -d' ' -f1)"
+check "committed bundle не изменён" '[[ "$bundle_hash_after" == "$bundle_hash_before" ]]'
+check "gsettings не изменились"      '[[ "$(gsettings_state)" == "$gsettings_before" ]]'
 
 # ---------- Итог ----------
 echo
